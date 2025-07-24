@@ -891,7 +891,7 @@ try {
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         function downloadVCard(contactId) {
-            window.location.href = `api/download_vcard.php?id=${contactId}`;
+            window.location.href = `/api/download_vcard.php?id=${contactId}`;
         }
     </script>
 </body>

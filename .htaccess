@@ -5,6 +5,10 @@ RewriteEngine On
 RewriteCond %{REQUEST_URI} ^/uploads/
 RewriteRule ^(.*)$ - [L]
 
+# Assets-Ordner erlauben
+RewriteCond %{REQUEST_URI} ^/assets/
+RewriteRule ^(.*)$ - [L]
+
 # API-Zugriffe erlauben  
 RewriteCond %{REQUEST_URI} ^/api/
 RewriteRule ^(.*)$ - [L]
@@ -14,6 +18,8 @@ RewriteRule ^/?$ index.php [L]
 RewriteRule ^index/?$ index.php [L]
 RewriteRule ^admin/?$ admin.php [L]
 RewriteRule ^admin_login/?$ admin_login.php [L]
+RewriteRule ^auftrag/?$ auftrag.php [L]
+RewriteRule ^auftrag_settings/?$ auftrag_settings.php [L]
 RewriteRule ^debug/?$ debug.php [L]
 RewriteRule ^debug_profiles/?$ debug_profiles.php [L]
 

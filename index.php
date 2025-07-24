@@ -2,6 +2,16 @@
 require_once 'config.php';
 $contactManager = new ContactManager();
 $contacts = $contactManager->getAllContacts();
+// Admin-Links laden
+$settingsFile = 'admin_settings.json';
+$settings = [];
+if (file_exists($settingsFile)) {
+    $settings = json_decode(file_get_contents($settingsFile), true) ?: [];
+}
+function admin_link($key) {
+    global $settings;
+    return !empty($settings[$key]) ? $settings[$key] : null;
+}
 ?>
 <!DOCTYPE html>
 <html lang="de">
@@ -191,6 +201,21 @@ $contacts = $contactManager->getAllContacts();
                 font-size: 0.8rem !important;
                 display: block;
             }
+            
+            /* Mobile Service Buttons */
+            .premium-card .btn-outline-light {
+                padding: 1rem 0.5rem !important;
+                font-size: 0.85rem !important;
+            }
+            
+            .premium-card .btn-outline-light i {
+                font-size: 1.5rem !important;
+                margin-bottom: 0.5rem !important;
+            }
+            
+            .premium-card .btn-outline-light small {
+                font-size: 0.7rem !important;
+            }
         }
         
         @media (max-width: 768px) {
@@ -345,16 +370,20 @@ $contacts = $contactManager->getAllContacts();
                         </p>
                     </div>
                     <div class="col-md-4 text-end d-none d-md-block">
+                        <!-- Auftragsbutton entfernt -->
                         <a href="admin" class="btn btn-outline-light me-2">
                             <i class="bi bi-gear"></i> Administration
                         </a>
-                        <a href="tel:+41525601440" class="btn btn-warning">
-                            <i class="bi bi-telephone-fill"></i> +41 52 560 14 40
+                        <?php if (admin_link('phone')): ?>
+                        <a href="tel:<?= htmlspecialchars(admin_link('phone')) ?>" class="btn btn-warning">
+                            <i class="bi bi-telephone-fill"></i> <?= htmlspecialchars(admin_link('phone')) ?>
                         </a>
+                        <?php endif; ?>
                     </div>
                     <!-- Mobile Header Buttons -->
                     <div class="col-12 d-md-none mt-3">
                         <div class="d-grid gap-2">
+                            <!-- Auftragsbutton entfernt (mobile) -->
                             <a href="tel:+41525601440" class="btn btn-warning">
                                 <i class="bi bi-telephone-fill"></i> +41 52 560 14 40
                             </a>
@@ -400,6 +429,66 @@ $contacts = $contactManager->getAllContacts();
                         <i class="bi bi-star-fill text-warning"></i>
                         5.0 Google Bewertung (92 Rezensionen)
                     </small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Schütz Service Funktionen -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="premium-card" style="background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); color: white;">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h4 class="mb-3">
+                                <i class="bi bi-tools security-icon"></i>
+                                Unsere Services & Informationen
+                            </h4>
+                            <p class="mb-0 opacity-75">
+                                Entdecken Sie unser vollständiges Leistungsspektrum und erfahren Sie mehr über uns
+                            </p>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <!-- Auftragsformular Button -->
+                                <button class="btn btn-warning btn-lg fw-bold" onclick="window.location.href='auftrag'">
+                                    <i class="bi bi-clipboard-check me-2"></i>
+                                    Auftrag erstellen
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Service Buttons Grid -->
+                    <div class="row mt-4 g-3">
+                        <div class="col-md-3 col-6">
+                            <button class="btn btn-outline-light w-100" onclick="showPresentationModal()">
+                                <i class="bi bi-file-earmark-pdf d-block fs-4 mb-2"></i>
+                                <span class="d-block">Präsentation</span>
+                                <small class="d-block opacity-75">PDF ansehen</small>
+                            </button>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <button class="btn btn-outline-light w-100" onclick="showGoogleReviews()">
+                                <i class="bi bi-star-fill d-block fs-4 mb-2"></i>
+                                <span class="d-block">Bewertungen</span>
+                                <small class="d-block opacity-75">5.0 ★ Google</small>
+                            </button>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <button class="btn btn-outline-light w-100" onclick="openNavigation()">
+                                <i class="bi bi-geo-alt-fill d-block fs-4 mb-2"></i>
+                                <span class="d-block">Navigation</span>
+                                <small class="d-block opacity-75">Route zu uns</small>
+                            </button>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <button class="btn btn-outline-light w-100" onclick="openWebsite()">
+                                <i class="bi bi-globe d-block fs-4 mb-2"></i>
+                                <span class="d-block">Webseite</span>
+                                <small class="d-block opacity-75">Mehr erfahren</small>
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -664,25 +753,172 @@ $contacts = $contactManager->getAllContacts();
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="js/contacts.js"></script>
-</body>
-</html>
-
-
-    <!-- Modal für Details -->
-    <div class="modal fade" id="detailModal">
-        <div class="modal-dialog">
+    <!-- Service & Social Media Links -->
+    <div class="container my-4">
+        <div class="d-flex flex-wrap gap-2 justify-content-center">
+            <?php if (admin_link('google_review_url')): ?>
+                <a href="<?= htmlspecialchars(admin_link('google_review_url')) ?>" target="_blank" class="btn btn-outline-primary">
+                    <i class="bi bi-star-fill"></i> Google Bewertung
+                </a>
+            <?php endif; ?>
+            <?php if (admin_link('maps_url')): ?>
+                <a href="<?= htmlspecialchars(admin_link('maps_url')) ?>" target="_blank" class="btn btn-outline-success">
+                    <i class="bi bi-geo-alt-fill"></i> Navigation
+                </a>
+            <?php endif; ?>
+            <?php if (admin_link('website_url')): ?>
+                <a href="<?= htmlspecialchars(admin_link('website_url')) ?>" target="_blank" class="btn btn-outline-dark">
+                    <i class="bi bi-globe2"></i> Webseite
+                </a>
+            <?php endif; ?>
+            <?php if (admin_link('email')): ?>
+                <a href="mailto:<?= htmlspecialchars(admin_link('email')) ?>" class="btn btn-outline-secondary">
+                    <i class="bi bi-envelope-fill"></i> E-Mail
+                </a>
+            <?php endif; ?>
+            <?php if (admin_link('instagram_url')): ?>
+                <a href="<?= htmlspecialchars(admin_link('instagram_url')) ?>" target="_blank" class="btn btn-outline-danger">
+                    <i class="bi bi-instagram"></i> Instagram
+                </a>
+            <?php endif; ?>
+            <?php if (admin_link('facebook_url')): ?>
+                <a href="<?= htmlspecialchars(admin_link('facebook_url')) ?>" target="_blank" class="btn btn-outline-primary">
+                    <i class="bi bi-facebook"></i> Facebook
+                </a>
+            <?php endif; ?>
+            <?php if (admin_link('linkedin_url')): ?>
+                <a href="<?= htmlspecialchars(admin_link('linkedin_url')) ?>" target="_blank" class="btn btn-outline-info">
+                    <i class="bi bi-linkedin"></i> LinkedIn
+                </a>
+            <?php endif; ?>
+            <?php if (admin_link('whatsapp_url')): ?>
+                <a href="<?= htmlspecialchars(admin_link('whatsapp_url')) ?>" target="_blank" class="btn btn-outline-success">
+                    <i class="bi bi-whatsapp"></i> WhatsApp
+                </a>
+            <?php endif; ?>
+        </div>
+    </div>
+    <!-- PDF Präsentations Modal -->
+    <div class="modal fade" id="presentationModal" tabindex="-1">
+        <div class="modal-dialog modal-xl">
             <div class="modal-content">
-                <div class="modal-body" id="modal-content">
-                    <!-- Dynamischer Inhalt -->
+                <div class="modal-header" style="background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); color: white;">
+                    <h5 class="modal-title">
+                        <i class="bi bi-file-earmark-pdf me-2"></i>
+                        Schütz Schlüsselservice - Firmenpräsentation
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-0">
+                    <iframe src="assets/SchuetzPDF.pdf" width="100%" height="600px" frameborder="0">
+                        <p>Ihr Browser unterstützt keine PDF-Anzeige. 
+                           <a href="assets/SchuetzPDF.pdf" target="_blank">PDF herunterladen</a>
+                        </p>
+                    </iframe>
+                </div>
+                <div class="modal-footer">
+                    <a href="assets/SchuetzPDF.pdf" download class="btn btn-primary">
+                        <i class="bi bi-download me-2"></i>PDF herunterladen
+                    </a>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Schließen</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Google Reviews Modal -->
+    <div class="modal fade" id="reviewsModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header" style="background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); color: white;">
+                    <h5 class="modal-title">
+                        <i class="bi bi-star-fill me-2"></i>
+                        Google Bewertungen
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center mb-4">
+                        <div class="display-1 text-warning">
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                        </div>
+                        <h3 style="color: var(--primary-color);">5.0 von 5 Sternen</h3>
+                        <p class="text-muted">Basierend auf 92 Google Rezensionen</p>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <strong>Kundenzufriedenheit steht bei uns an erster Stelle!</strong><br>
+                        Über 90 zufriedene Kunden haben uns auf Google bewertet.
+                    </div>
+                    
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <strong>Maria S.</strong>
+                                        <div class="text-warning small">★★★★★</div>
+                                    </div>
+                                    <p class="small text-muted mb-0">
+                                        "Sehr schneller und zuverlässiger Service. Freundliches Personal und faire Preise."
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <strong>Peter M.</strong>
+                                        <div class="text-warning small">★★★★★</div>
+                                    </div>
+                                    <p class="small text-muted mb-0">
+                                        "Professionelle Arbeit, pünktlich und kompetent. Kann ich nur weiterempfehlen!"
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <?php if (admin_link('google_review_url')): ?>
+                    <a href="<?= htmlspecialchars(admin_link('google_review_url')) ?>" target="_blank" class="btn btn-primary">
+                        <i class="bi bi-star me-2"></i>Bewertung abgeben
+                    </a>
+                    <?php endif; ?>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Schließen</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/contacts.js"></script>
     <script>
-    // Modal-Logik
-    $('.details-btn').click(function(){
-        var id = $(
+        // Service Funktionen
+        function showPresentationModal() {
+            new bootstrap.Modal(document.getElementById('presentationModal')).show();
+        }
+        
+        function showGoogleReviews() {
+            new bootstrap.Modal(document.getElementById('reviewsModal')).show();
+        }
+        
+        function openNavigation() {
+            // Google Maps Navigation zu Schütz Schlüsselservice
+            const address = "Schütz Schlüssel- und Schreinerservice GmbH, Winterthur";
+            const encodedAddress = encodeURIComponent(address);
+            window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodedAddress}`, '_blank');
+        }
+        
+        function openWebsite() {
+            window.open('https://schuetz-schluesselservice.ch', '_blank');
+        }
+    </script>
+</body>
+</html>

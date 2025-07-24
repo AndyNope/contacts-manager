@@ -255,6 +255,9 @@ if (isset($_GET['logout'])) {
                     </p>
                 </div>
                 <div>
+                    <a href="auftrag_settings" class="btn btn-success me-2">
+                        <i class="bi bi-clipboard-check"></i> Auftragsformular
+                    </a>
                     <a href="index" class="btn btn-outline-light me-2">
                         <i class="bi bi-eye"></i> Kontakte anzeigen
                     </a>
