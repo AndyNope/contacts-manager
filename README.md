@@ -13,6 +13,10 @@ Eine responsive Webanwendung zur Verwaltung und zum Download von digitalen Konta
 - 🔐 **Admin-Bereich** - Kontakte hinzufügen, bearbeiten und löschen
 - 🎨 **Moderne UI** - Bootstrap 5 mit benutzerfreundlichem Design
 - 🇨🇭 **Schweiz-spezifisch** - Telefonnummern, Adressen und Beispieldaten für die Schweiz
+- 🎴 **PDF-Visitenkarten** - Professionelle Visitenkarten mit QR-Codes generieren
+- 📱 **QR-Code Integration** - vCard-Daten als QR-Code für einfaches Scannen
+- 🎨 **Corporate Design** - Anpassbares Branding und Farbschema
+- 🖨️ **Print-Optimierung** - Perfekt für professionellen Druck (85mm x 54mm)
 
 ## Systemanforderungen
 
@@ -91,6 +95,38 @@ Die Datenbank enthält Beispielkontakte von Schweizer Unternehmen aus verschiede
 2. **Kontakt hinzufügen**: Füllen Sie das Formular aus und klicken Sie "Hinzufügen"
 3. **Kontakt bearbeiten**: Klicken Sie auf das Bearbeiten-Symbol in der Tabelle
 4. **Kontakt löschen**: Klicken Sie auf das Löschen-Symbol und bestätigen Sie
+5. **Visitenkarte erstellen**: 
+   - Klicken Sie auf "Vorschau" um die Visitenkarte anzuzeigen
+   - Klicken Sie auf "PDF" um die Visitenkarte herunterzuladen
+
+## PDF-Visitenkarten Feature 🎴
+
+### Funktionen
+- **Doppelseitige Visitenkarten** - Vorderseite mit Kontaktdaten, Rückseite mit QR-Code
+- **QR-Code Integration** - Automatische vCard-Generierung für einfaches Scannen
+- **Corporate Design** - Professionelles Branding mit Firmenlogo und Farbschema
+- **Print-Ready Format** - Optimiert für Standard-Visitenkarten (85mm x 54mm)
+- **Foto-Integration** - Kontaktfotos werden automatisch eingebunden
+- **Responsive Preview** - Vorschau-Funktion vor dem Download
+
+### Design-Merkmale
+- **Vorderseite**: Blauer Farbverlauf mit Kontaktfoto, Name, Position und Kontaktdaten
+- **Rückseite**: Weißer Hintergrund mit Firmenlogo, QR-Code und Service-Informationen
+- **Typografie**: Optimierte Schriftgrößen für professionelle Lesbarkeit
+- **Print-Sicherheit**: Ausreichende Ränder für Schnitt-Toleranzen
+
+### Verwendung
+1. **Admin-Bereich**: Visitenkarten-Buttons bei jedem Kontakt
+2. **Vorschau**: Klicken Sie "Vorschau" für Browser-Anzeige
+3. **Download**: Klicken Sie "PDF" für HTML-Download (konvertierbar zu PDF)
+4. **Hauptseite**: PDF-Download-Button auch in der Kontaktliste verfügbar
+
+### Anpassung
+Die Visitenkarten können in `api/generate_business_card.php` angepasst werden:
+- Farben und Branding
+- Logo und Firmendaten
+- Layout und Abstände
+- Service-Beschreibungen
 
 ## vCard-Format für Schweizer Kontakte
 
@@ -138,5 +174,42 @@ Wenn das Admin-Login nicht funktioniert:
 
 ## Version
 
-Version 1.1 - Schweiz-Edition mit verbessertem Login und lokalen Anpassungen
+Version 1.2 - Schweiz-Edition mit PDF-Visitenkarten und verbessertem Login
+
+## Lizenz
+
+MIT License
+
+Copyright (c) 2025 Andy Bui
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+## Autor
+
+**Andy Bui** - *Initial work and development*
+
+## Beitrag leisten
+
+1. Forken Sie das Repository
+2. Erstellen Sie einen Feature-Branch (`git checkout -b feature/AmazingFeature`)
+3. Committen Sie Ihre Änderungen (`git commit -m 'Add some AmazingFeature'`)
+4. Pushen Sie den Branch (`git push origin feature/AmazingFeature`)
+5. Öffnen Sie einen Pull Request
+
 # contacts-manager
