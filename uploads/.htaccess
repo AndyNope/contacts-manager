@@ -1,0 +1,30 @@
+# Sicherheit für Upload-Ordner
+# Keine PHP-Dateien ausführen
+<Files "*.php">
+    Order Deny,Allow
+    Deny from all
+</Files>
+
+# Nur Bilder erlauben
+<FilesMatch "\.(jpg|jpeg|png|gif|webp)$">
+    Order Allow,Deny
+    Allow from all
+</FilesMatch>
+
+# Alle anderen Dateitypen blockieren
+<FilesMatch "^(?!.*\.(jpg|jpeg|png|gif|webp)$).*$">
+    Order Deny,Allow
+    Deny from all
+</FilesMatch>
+
+# Verzeichnis-Listing deaktivieren
+Options -Indexes
+
+# Cache-Header für Bilder
+<IfModule mod_expires.c>
+    ExpiresActive on
+    ExpiresByType image/jpeg "access plus 1 month"
+    ExpiresByType image/png "access plus 1 month"
+    ExpiresByType image/gif "access plus 1 month"
+    ExpiresByType image/webp "access plus 1 month"
+</IfModule>

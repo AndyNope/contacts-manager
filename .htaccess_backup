@@ -1,0 +1,69 @@
+# Sicherheit und Konfiguration für Schütz Kontaktverwaltung
+
+# Fehlerbehandlung
+ErrorDocument 404 /index.php
+
+# MIME-Types für Bilder
+AddType image/webp .webp
+
+# Cache-Einstellungen für statische Dateien
+<IfModule mod_expires.c>
+    ExpiresActive on
+    ExpiresByType image/jpeg "access plus 1 month"
+    ExpiresByType image/png "access plus 1 month"
+    ExpiresByType image/gif "access plus 1 month"
+    ExpiresByType image/webp "access plus 1 month"
+    ExpiresByType text/css "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
+</IfModule>
+
+# Komprimierung
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/plain
+    AddOutputFilterByType DEFLATE text/html
+    AddOutputFilterByType DEFLATE text/xml
+    AddOutputFilterByType DEFLATE text/css
+    AddOutputFilterByType DEFLATE application/xml
+    AddOutputFilterByType DEFLATE application/xhtml+xml
+    AddOutputFilterByType DEFLATE application/rss+xml
+    AddOutputFilterByType DEFLATE application/javascript
+    AddOutputFilterByType DEFLATE application/x-javascript
+</IfModule>
+
+# Sicherheits-Header
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options nosniff
+    Header always set X-Frame-Options DENY
+    Header always set X-XSS-Protection "1; mode=block"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+
+# URL Rewriting für saubere URLs ohne .php
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    
+    # Direkte Zugriffe auf Upload-Ordner erlauben
+    RewriteCond %{REQUEST_URI} ^/uploads/
+    RewriteRule ^(.*)$ - [L]
+    
+    # API-Zugriffe erlauben
+    RewriteCond %{REQUEST_URI} ^/api/
+    RewriteRule ^(.*)$ - [L]
+    
+    # Umleitung von .php URLs zu clean URLs (Redirect 301)
+    RewriteCond %{THE_REQUEST} /([^.]+)\.php[\s?] [NC]
+    RewriteRule ^ /%1? [R=301,L]
+    
+    # Interne Weiterleitung von clean URLs zu .php Dateien (außer Profil-URLs)
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME}.php -f
+    RewriteCond %{REQUEST_URI} !^/[A-Za-zÀ-ž]+-[A-Za-zÀ-ž]+/?$
+    RewriteRule ^([^/]+)/?$ $1.php [L]
+    
+    # Profil-URLs wie /Maria-Glutz zu profile.php weiterleiten
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_URI} ^/([A-Za-zÀ-ž]+-[A-Za-zÀ-ž]+)/?$
+    RewriteRule ^([A-Za-zÀ-ž]+-[A-Za-zÀ-ž]+)/?$ profile.php?name=$1 [L,QSA]
+</IfModule>

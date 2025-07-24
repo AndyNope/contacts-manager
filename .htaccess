@@ -1,0 +1,28 @@
+# Einfache .htaccess für Tests
+RewriteEngine On
+
+# Direkte Zugriffe auf Upload-Ordner erlauben
+RewriteCond %{REQUEST_URI} ^/uploads/
+RewriteRule ^(.*)$ - [L]
+
+# API-Zugriffe erlauben  
+RewriteCond %{REQUEST_URI} ^/api/
+RewriteRule ^(.*)$ - [L]
+
+# Spezifische Seiten ohne .php
+RewriteRule ^index/?$ index.php [L]
+RewriteRule ^admin/?$ admin.php [L]
+RewriteRule ^admin_login/?$ admin_login.php [L]
+RewriteRule ^debug/?$ debug.php [L]
+RewriteRule ^debug_profiles/?$ debug_profiles.php [L]
+
+# Profil-URLs - MUSS nach den spezifischen Regeln stehen
+# Neue Format: /profile/name
+RewriteRule ^profile/([A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])/?$ profile.php?name=$1 [L,QSA]
+
+# Alte Format: direkter Name (Fallback für Kompatibilität)
+# Akzeptiert Namen wie: Maria-Glutz, Hans-Peter-Mueller, etc.
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_URI} ^/([A-Za-zÀ-ÿ0-9][A-Za-zÀ-ÿ0-9\-]*[A-Za-zÀ-ÿ0-9])/?$
+RewriteRule ^([A-Za-zÀ-ÿ0-9][A-Za-zÀ-ÿ0-9\-]*[A-Za-zÀ-ÿ0-9])/?$ profile.php?name=$1 [L,QSA]
