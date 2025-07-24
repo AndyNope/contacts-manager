@@ -314,3 +314,50 @@ document.getElementById('website').addEventListener('blur', function(e) {
         e.target.value = 'https://' + url;
     }
 });
+
+// PDF-Visitenkarte herunterladen
+function downloadBusinessCard(contactId) {
+    if (!contactId) {
+        alert('Ungültige Kontakt-ID');
+        return;
+    }
+    
+    // Loading-State anzeigen
+    const button = event.target.closest('button');
+    const originalContent = button.innerHTML;
+    button.innerHTML = '<i class="spinner-border spinner-border-sm me-1"></i>Generiere...';
+    button.disabled = true;
+    
+    // PDF-Download starten
+    const url = `api/generate_business_card.php?id=${contactId}`;
+    
+    // Neues Fenster öffnen für Download
+    const downloadFrame = document.createElement('iframe');
+    downloadFrame.style.display = 'none';
+    downloadFrame.src = url;
+    document.body.appendChild(downloadFrame);
+    
+    // Button nach kurzer Zeit zurücksetzen
+    setTimeout(() => {
+        button.innerHTML = originalContent;
+        button.disabled = false;
+        
+        // Iframe nach Download entfernen
+        setTimeout(() => {
+            if (downloadFrame.parentNode) {
+                downloadFrame.parentNode.removeChild(downloadFrame);
+            }
+        }, 5000);
+    }, 2000);
+}
+
+// PDF-Visitenkarte Vorschau
+function previewBusinessCard(contactId) {
+    if (!contactId) {
+        alert('Ungültige Kontakt-ID');
+        return;
+    }
+    
+    const url = `api/generate_business_card.php?id=${contactId}&preview=1`;
+    window.open(url, '_blank');
+}

@@ -711,6 +711,9 @@ function admin_link($key) {
                                         <button class="btn btn-outline-primary" onclick="showContactDetails(<?= $contact['id'] ?>)">
                                             <i class="bi bi-eye-fill"></i> Details
                                         </button>
+                                        <button class="btn btn-outline-warning" onclick="downloadBusinessCard(<?= $contact['id'] ?>)" title="PDF-Visitenkarte">
+                                            <i class="bi bi-credit-card"></i> PDF
+                                        </button>
                                         <button class="btn btn-success" onclick="downloadContact(<?= $contact['id'] ?>)">
                                             <i class="bi bi-download"></i> vCard
                                         </button>
@@ -795,6 +798,9 @@ function admin_link($key) {
                                         <div class="btn-group btn-group-sm">
                                             <button class="btn btn-outline-primary" onclick="showContactDetails(<?= $contact['id'] ?>)">
                                                 <i class="bi bi-eye-fill"></i> Details
+                                            </button>
+                                            <button class="btn btn-outline-warning" onclick="downloadBusinessCard(<?= $contact['id'] ?>)" title="PDF-Visitenkarte">
+                                                <i class="bi bi-credit-card"></i> PDF
                                             </button>
                                             <button class="btn btn-success" onclick="downloadContact(<?= $contact['id'] ?>)">
                                                 <i class="bi bi-download"></i> vCard

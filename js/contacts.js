@@ -288,3 +288,71 @@ function showErrorMessage(message) {
         }
     }, 5000);
 }
+
+// PDF-Visitenkarte herunterladen
+function downloadBusinessCard(contactId) {
+    if (!contactId) {
+        showErrorMessage('Ungültige Kontakt-ID');
+        return;
+    }
+    
+    // Loading-State anzeigen
+    const button = event.target.closest('button');
+    const originalContent = button.innerHTML;
+    button.innerHTML = '<i class="spinner-border spinner-border-sm me-1"></i>PDF...';
+    button.disabled = true;
+    
+    // PDF-Download starten
+    const url = `api/generate_business_card.php?id=${contactId}`;
+    
+    // Download über versteckten Link
+    const downloadLink = document.createElement('a');
+    downloadLink.href = url;
+    downloadLink.download = `visitenkarte_${contactId}.pdf`;
+    downloadLink.style.display = 'none';
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    document.body.removeChild(downloadLink);
+    
+    // Button nach kurzer Zeit zurücksetzen
+    setTimeout(() => {
+        button.innerHTML = originalContent;
+        button.disabled = false;
+    }, 2000);
+    
+    // Erfolgs-Toast anzeigen
+    showSuccessMessage('PDF-Visitenkarte wird heruntergeladen...');
+}
+
+// PDF-Visitenkarte Vorschau
+function previewBusinessCard(contactId) {
+    if (!contactId) {
+        showErrorMessage('Ungültige Kontakt-ID');
+        return;
+    }
+    
+    const url = `api/generate_business_card.php?id=${contactId}&preview=1`;
+    window.open(url, '_blank');
+}
+
+// Erfolgs-Nachricht anzeigen
+function showSuccessMessage(message) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = 'alert alert-success alert-dismissible fade show position-fixed';
+    alertDiv.style.top = '20px';
+    alertDiv.style.right = '20px';
+    alertDiv.style.zIndex = '9999';
+    alertDiv.innerHTML = `
+        <i class="bi bi-check-circle me-2"></i>${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(alertDiv);
+    
+    // Automatisch nach 3 Sekunden entfernen
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.remove();
+        }
+    }, 3000);
+}

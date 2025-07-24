@@ -648,10 +648,16 @@ if (isset($_GET['logout'])) {
                                     </td>
                                     <td>
                                         <div class="btn-group btn-group-sm">
-                                            <button class="btn btn-outline-primary" onclick="editContact(<?= htmlspecialchars(json_encode($contact)) ?>)">
+                                            <button class="btn btn-outline-primary" onclick="editContact(<?= htmlspecialchars(json_encode($contact)) ?>)" title="Bearbeiten">
                                                 <i class="bi bi-pencil"></i>
                                             </button>
-                                            <button class="btn btn-outline-danger" onclick="deleteContact(<?= $contact['id'] ?>, '<?= htmlspecialchars($contact['vorname'] . ' ' . $contact['nachname']) ?>')">
+                                            <button class="btn btn-outline-info" onclick="previewBusinessCard(<?= $contact['id'] ?>)" title="Visitenkarte Vorschau">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
+                                            <button class="btn btn-outline-success" onclick="downloadBusinessCard(<?= $contact['id'] ?>)" title="PDF-Visitenkarte">
+                                                <i class="bi bi-credit-card"></i>
+                                            </button>
+                                            <button class="btn btn-outline-danger" onclick="deleteContact(<?= $contact['id'] ?>, '<?= htmlspecialchars($contact['vorname'] . ' ' . $contact['nachname']) ?>')" title="Löschen">
                                                 <i class="bi bi-trash"></i>
                                             </button>
                                         </div>
