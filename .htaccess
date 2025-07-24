@@ -10,6 +10,7 @@ RewriteCond %{REQUEST_URI} ^/api/
 RewriteRule ^(.*)$ - [L]
 
 # Spezifische Seiten ohne .php
+RewriteRule ^/?$ index.php [L]
 RewriteRule ^index/?$ index.php [L]
 RewriteRule ^admin/?$ admin.php [L]
 RewriteRule ^admin_login/?$ admin_login.php [L]

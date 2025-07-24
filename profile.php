@@ -455,7 +455,7 @@ try {
                 <!-- Navigation -->
                 <div class="row mt-4">
                     <div class="col-12 text-center">
-                        <a href="index" class="btn btn-outline-light me-2">
+                        <a href="/" class="btn btn-outline-light me-2">
                             <i class="bi bi-arrow-left me-2"></i>Alle Kontakte
                         </a>
                         <a href="tel:+41525601440" class="btn btn-warning">
