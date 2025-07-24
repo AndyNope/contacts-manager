@@ -191,11 +191,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             </a>
                         </div>
                         
-                        <div class="mt-4 text-center">
-                            <small class="text-muted">
-                                Standard Login: admin / admin123
-                            </small>
-                        </div>
+                        <!-- Standard-Login-Hinweis entfernt -->
                     </div>
                 </div>
             </div>

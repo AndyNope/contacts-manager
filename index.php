@@ -203,18 +203,33 @@ function admin_link($key) {
             }
             
             /* Mobile Service Buttons */
-            .premium-card .btn-outline-light {
-                padding: 1rem 0.5rem !important;
-                font-size: 0.85rem !important;
+            .premium-card {
+                padding: 1.5rem;
+                margin: 1rem 0;
             }
             
-            .premium-card .btn-outline-light i {
-                font-size: 1.5rem !important;
-                margin-bottom: 0.5rem !important;
+            .service-btn {
+                padding: 1rem 0.5rem;
+                min-height: 100px;
+                font-size: 0.85rem;
             }
             
-            .premium-card .btn-outline-light small {
-                font-size: 0.7rem !important;
+            .service-btn i {
+                font-size: 1.5rem;
+                margin-bottom: 0.5rem;
+            }
+            
+            .service-btn .btn-title {
+                font-size: 0.9rem;
+            }
+            
+            .service-btn .btn-subtitle {
+                font-size: 0.7rem;
+            }
+            
+            .service-buttons-container {
+                margin-top: 1.5rem;
+                padding-top: 1rem;
             }
         }
         
@@ -318,6 +333,7 @@ function admin_link($key) {
         .security-icon {
             color: var(--accent-color);
             margin-right: 8px;
+            margin-left: 8px;
         }
         
         .contact-info a {
@@ -334,7 +350,74 @@ function admin_link($key) {
         .premium-card {
             background: linear-gradient(145deg, #ffffff, #f8fafc);
             border: 1px solid rgba(30, 58, 138, 0.1);
-            box-shadow: 0 4px 20px rgba(30, 58, 138, 0.08);
+            box-shadow: 0 8px 30px rgba(30, 58, 138, 0.12);
+            border-radius: 20px;
+            padding: 2.5rem;
+            margin: 2rem 0;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .premium-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="1" fill="rgba(255,255,255,0.1)"/></svg>') repeat;
+            opacity: 0.3;
+            pointer-events: none;
+        }
+        
+        .service-buttons-container {
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .service-btn {
+            background: rgba(255, 255, 255, 0.15);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 1.5rem 1rem;
+            border-radius: 15px;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            height: 100%;
+            min-height: 120px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+        
+        .service-btn:hover {
+            background: rgba(255, 255, 255, 0.25);
+            border-color: rgba(255, 255, 255, 0.5);
+            color: white;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        }
+        
+        .service-btn i {
+            font-size: 2rem;
+            margin-bottom: 0.75rem;
+            opacity: 0.9;
+        }
+        
+        .service-btn .btn-title {
+            font-weight: 600;
+            font-size: 1rem;
+            margin-bottom: 0.25rem;
+            line-height: 1.2;
+        }
+        
+        .service-btn .btn-subtitle {
+            font-size: 0.85rem;
+            opacity: 0.8;
+            line-height: 1.1;
         }
         
         /* Verhindert Text-Overflow in Kontakt-Karten */
@@ -459,34 +542,36 @@ function admin_link($key) {
                     </div>
                     
                     <!-- Service Buttons Grid -->
-                    <div class="row mt-4 g-3">
-                        <div class="col-md-3 col-6">
-                            <button class="btn btn-outline-light w-100" onclick="showPresentationModal()">
-                                <i class="bi bi-file-earmark-pdf d-block fs-4 mb-2"></i>
-                                <span class="d-block">Präsentation</span>
-                                <small class="d-block opacity-75">PDF ansehen</small>
-                            </button>
-                        </div>
-                        <div class="col-md-3 col-6">
-                            <button class="btn btn-outline-light w-100" onclick="showGoogleReviews()">
-                                <i class="bi bi-star-fill d-block fs-4 mb-2"></i>
-                                <span class="d-block">Bewertungen</span>
-                                <small class="d-block opacity-75">5.0 ★ Google</small>
-                            </button>
-                        </div>
-                        <div class="col-md-3 col-6">
-                            <button class="btn btn-outline-light w-100" onclick="openNavigation()">
-                                <i class="bi bi-geo-alt-fill d-block fs-4 mb-2"></i>
-                                <span class="d-block">Navigation</span>
-                                <small class="d-block opacity-75">Route zu uns</small>
-                            </button>
-                        </div>
-                        <div class="col-md-3 col-6">
-                            <button class="btn btn-outline-light w-100" onclick="openWebsite()">
-                                <i class="bi bi-globe d-block fs-4 mb-2"></i>
-                                <span class="d-block">Webseite</span>
-                                <small class="d-block opacity-75">Mehr erfahren</small>
-                            </button>
+                    <div class="service-buttons-container">
+                        <div class="row g-3">
+                            <div class="col-md-3 col-6">
+                                <button class="service-btn w-100" onclick="showPresentationModal()">
+                                    <i class="bi bi-file-earmark-pdf"></i>
+                                    <div class="btn-title">Präsentation</div>
+                                    <div class="btn-subtitle">PDF ansehen</div>
+                                </button>
+                            </div>
+                            <div class="col-md-3 col-6">
+                                <button class="service-btn w-100" onclick="showGoogleReviews()">
+                                    <i class="bi bi-star-fill"></i>
+                                    <div class="btn-title">Bewertungen</div>
+                                    <div class="btn-subtitle">5.0 ★ Google</div>
+                                </button>
+                            </div>
+                            <div class="col-md-3 col-6">
+                                <button class="service-btn w-100" onclick="openNavigation()">
+                                    <i class="bi bi-geo-alt-fill"></i>
+                                    <div class="btn-title">Navigation</div>
+                                    <div class="btn-subtitle">Route zu uns</div>
+                                </button>
+                            </div>
+                            <div class="col-md-3 col-6">
+                                <button class="service-btn w-100" onclick="openWebsite()">
+                                    <i class="bi bi-globe"></i>
+                                    <div class="btn-title">Webseite</div>
+                                    <div class="btn-subtitle">Mehr erfahren</div>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

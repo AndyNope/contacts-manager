@@ -236,6 +236,155 @@ if (isset($_GET['logout'])) {
             .admin-header {
                 padding: 1rem 0;
             }
+            
+            /* Mobile Header Anpassungen */
+            .admin-header h2 {
+                font-size: 1.5rem !important;
+                line-height: 1.3;
+            }
+            
+            .admin-header p {
+                font-size: 0.9rem !important;
+            }
+            
+            .admin-header .btn {
+                font-size: 0.8rem !important;
+                padding: 0.4rem 0.8rem !important;
+                margin-bottom: 0.5rem;
+            }
+            
+            .admin-header .row {
+                text-align: center !important;
+            }
+            
+            .admin-header .col-md-4 {
+                text-align: center !important;
+                margin-top: 1rem;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .admin-header h2 {
+                font-size: 1.3rem !important;
+            }
+            
+            .admin-header .btn {
+                font-size: 0.75rem !important;
+                padding: 0.3rem 0.6rem !important;
+                display: block;
+                width: 100%;
+                margin-bottom: 0.5rem;
+            }
+            
+            .admin-header .col-md-4 .btn:last-child {
+                margin-bottom: 0;
+            }
+        }
+        
+        /* Verbessertes Button-Design */
+        .admin-header .btn-outline-light {
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            color: white;
+            transition: all 0.3s ease;
+        }
+        
+        .admin-header .btn-outline-light:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: white;
+            color: white;
+            transform: translateY(-1px);
+        }
+        
+        .admin-header .btn-warning {
+            background: var(--accent-color);
+            border: none;
+            color: var(--dark-color);
+            font-weight: 600;
+        }
+        
+        .admin-header .btn-warning:hover {
+            background: #f59e0b;
+            color: var(--dark-color);
+            transform: translateY(-1px);
+        }
+        
+        .admin-header .btn-danger {
+            background: #dc3545;
+            border: none;
+            color: white;
+            font-weight: 600;
+        }
+        
+        .admin-header .btn-danger:hover {
+            background: #c82333;
+            color: white;
+            transform: translateY(-1px);
+        }
+        
+        /* Navbar Styling */
+        .admin-header .navbar-brand h2 {
+            font-size: 1.5rem;
+        }
+        
+        .admin-header .navbar-brand p {
+            font-size: 0.9rem;
+        }
+        
+        .admin-header .navbar-toggler {
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 0.25rem 0.5rem;
+        }
+        
+        .admin-header .navbar-toggler:focus {
+            box-shadow: none;
+        }
+        
+        .admin-header .nav-link {
+            padding: 0.5rem 0.75rem;
+            border-radius: 6px;
+            margin: 0.25rem 0.25rem;
+            transition: all 0.3s ease;
+        }
+        
+        .admin-header .nav-link:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-1px);
+        }
+        
+        .admin-header .nav-link.btn {
+            margin: 0.25rem 0.25rem;
+        }
+        
+        /* Mobile Navbar Anpassungen */
+        @media (max-width: 991px) {
+            .admin-header .navbar-brand h2 {
+                font-size: 1.3rem;
+                line-height: 1.3;
+            }
+            
+            .admin-header .navbar-brand p {
+                font-size: 0.8rem;
+            }
+            
+            .admin-header .navbar-collapse {
+                margin-top: 1rem;
+                padding-top: 1rem;
+                border-top: 1px solid rgba(255, 255, 255, 0.2);
+            }
+            
+            .admin-header .nav-link {
+                margin: 0.25rem 0;
+                padding: 0.75rem 1rem;
+                border-radius: 8px;
+                background: rgba(255, 255, 255, 0.1);
+            }
+            
+            .admin-header .nav-link.btn {
+                display: block;
+                text-align: center;
+                margin: 0.5rem 0;
+            }
+        }
         }
     </style>
 </head>
@@ -243,30 +392,57 @@ if (isset($_GET['logout'])) {
     <!-- Header -->
     <div class="admin-header">
         <div class="container position-relative">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <h2 class="mb-0 text-white">
-                        <i class="bi bi-shield-lock security-icon"></i>
-                        Schütz Kontaktverwaltung - Administration
-                    </h2>
-                    <p class="mb-0 mt-1 text-white-50">
-                        <i class="bi bi-building me-2"></i>
-                        Schlüssel- und Schreinerservice GmbH | Für Ihre Sicherheit
-                    </p>
-                </div>
-                <div>
-                    <a href="auftrag_settings" class="btn btn-success me-2">
-                        <i class="bi bi-clipboard-check"></i> Auftragsformular
-                    </a>
-                    <a href="index" class="btn btn-outline-light me-2">
-                        <i class="bi bi-eye"></i> Kontakte anzeigen
-                    </a>
-                    <a href="tel:+41525601440" class="btn btn-warning me-2">
-                        <i class="bi bi-telephone-fill"></i> +41 52 560 14 40
-                    </a>
-                    <a href="?logout=1" class="btn btn-outline-light">
-                        <i class="bi bi-box-arrow-right"></i> Abmelden
-                    </a>
+            <div class="row align-items-center">
+                <div class="col-12">
+                    <nav class="navbar navbar-expand-lg navbar-dark">
+                        <div class="container-fluid p-0">
+                            <!-- Brand/Title -->
+                            <div class="navbar-brand mb-0 me-4">
+                                <h2 class="mb-0 text-white">
+                                    <i class="bi bi-shield-lock security-icon"></i>
+                                    Schütz Kontaktverwaltung - Administration
+                                </h2>
+                                <p class="mb-0 mt-1 text-white-50 small">
+                                    <i class="bi bi-building me-2"></i>
+                                    Schlüssel- und Schreinerservice GmbH | Für Ihre Sicherheit
+                                </p>
+                            </div>
+                            
+                            <!-- Mobile Hamburger Button -->
+                            <button class="navbar-toggler border-0 shadow-none" type="button" 
+                                    data-bs-toggle="collapse" data-bs-target="#adminNavbar" 
+                                    aria-controls="adminNavbar" aria-expanded="false" 
+                                    aria-label="Toggle navigation">
+                                <span class="navbar-toggler-icon"></span>
+                            </button>
+                            
+                            <!-- Collapsible Navigation -->
+                            <div class="collapse navbar-collapse" id="adminNavbar">
+                                <ul class="navbar-nav ms-auto align-items-lg-center">
+                                    <li class="nav-item">
+                                        <a href="index" class="nav-link text-white">
+                                            <i class="bi bi-eye me-1"></i> Kontakte anzeigen
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="admin_users.php" class="nav-link text-white">
+                                            <i class="bi bi-people me-1"></i> Admin-Benutzer
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="admin_links.php" class="nav-link text-white">
+                                            <i class="bi bi-link-45deg me-1"></i> Links verwalten
+                                        </a>
+                                    </li>
+                                    <li class="nav-item ms-lg-2">
+                                        <a href="?logout=1" class="nav-link btn btn-danger text-white px-3 rounded">
+                                            <i class="bi bi-box-arrow-right me-1"></i> Abmelden
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </nav>
                 </div>
             </div>
         </div>
