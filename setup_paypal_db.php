@@ -2,9 +2,9 @@
 // Direct PDO connection for database setup
 try {
     $host = 'localhost';
-    $user = 'kontaktverwaltung';
-    $pass = 'Kontakt&Verwaltung';
-    $dbname = 'kontaktverwaltung';
+    $user = 'easycontact';
+    $pass = 'EzC0nt@ct2025!';
+    $dbname = 'easycontact';
     
     // First connect without database to create it
     $pdo = new PDO("mysql:host=$host;charset=utf8mb4", $user, $pass, [

@@ -1,7 +1,12 @@
 <?php
 session_start();
 
-// Database connection
+// Error reporting for debugging
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
+// Database connection with detailed error handling
 try {
     $host = 'localhost';
     $user = 'easycontact';
@@ -14,13 +19,15 @@ try {
         PDO::ATTR_EMULATE_PREPARES => false,
     ]);
 } catch (PDOException $e) {
-    http_response_code(500);
-    die(json_encode(['error' => 'Database connection failed']));
+    error_log('Database connection failed: ' . $e->getMessage());
+    header('Location: /register?error=registration_failed&message=' . urlencode('Database connection failed: ' . $e->getMessage()));
+    exit;
 }
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
-    die(json_encode(['error' => 'Method not allowed']));
+    header('Location: /register?error=registration_failed&message=' . urlencode('Method not allowed'));
+    exit;
 }
 
 // Get form data
@@ -35,10 +42,6 @@ $agreeTerms = isset($_POST['agree_terms']);
 
 // Validation
 $errors = [];
-
-if (empty($companyName)) {
-    $errors[] = 'Company name is required';
-}
 
 if (empty($firstName)) {
     $errors[] = 'First name is required';
@@ -73,6 +76,8 @@ $isPrivateProfile = false;
 if ($plan === 'free' && (empty($companyName) || $companyName === 'Private Profile')) {
     $companyName = $firstName . ' ' . $lastName . ' (Private)';
     $isPrivateProfile = true;
+} elseif ($plan !== 'free' && empty($companyName)) {
+    $errors[] = 'Company name is required for paid plans';
 }
 
 if (!empty($errors)) {
@@ -81,6 +86,15 @@ if (!empty($errors)) {
 }
 
 try {
+    // Check if required tables exist
+    $requiredTables = ['companies', 'users', 'contacts'];
+    foreach ($requiredTables as $table) {
+        $stmt = $pdo->query("SHOW TABLES LIKE '$table'");
+        if ($stmt->rowCount() === 0) {
+            throw new Exception("Required database table '$table' does not exist. Please run setup_database.php first.");
+        }
+    }
+    
     // Start transaction
     $pdo->beginTransaction();
     
@@ -93,7 +107,7 @@ try {
         exit;
     }
     
-    // Create company slug from name
+    // Create or get company
     if ($isPrivateProfile) {
         // For private profiles, use 'private' as company slug
         $companySlug = 'private';
@@ -104,11 +118,11 @@ try {
         $privateCompany = $stmt->fetch();
         
         if (!$privateCompany) {
-            // Create the private company
+            // Create the private company with minimal schema
             $stmt = $pdo->prepare("
                 INSERT INTO companies 
-                (slug, name, subscription_plan, subscription_status, contact_limit, created_at, updated_at) 
-                VALUES ('private', 'Private Profiles', 'free', 'active', -1, NOW(), NOW())
+                (slug, name, subscription_plan, subscription_status, contact_limit) 
+                VALUES ('private', 'Private Profiles', 'free', 'active', -1)
             ");
             $stmt->execute();
             $companyId = $pdo->lastInsertId();
@@ -123,10 +137,7 @@ try {
         $userSlug = trim($userSlug, '-');
         
         // Check if private profile with this slug already exists
-        $stmt = $pdo->prepare("
-            SELECT id FROM contacts 
-            WHERE company_id = ? AND slug = ?
-        ");
+        $stmt = $pdo->prepare("SELECT id FROM contacts WHERE company_id = ? AND slug = ?");
         $stmt->execute([$companyId, $userSlug]);
         if ($stmt->fetch()) {
             // Add number suffix if slug exists
@@ -168,11 +179,11 @@ try {
         
         $planConfig = $planLimits[$plan];
         
-        // Create company
+        // Create company with minimal required fields
         $stmt = $pdo->prepare("
             INSERT INTO companies 
-            (slug, name, subscription_plan, subscription_status, contact_limit, created_at, updated_at) 
-            VALUES (?, ?, ?, ?, ?, NOW(), NOW())
+            (slug, name, subscription_plan, subscription_status, contact_limit) 
+            VALUES (?, ?, ?, ?, ?)
         ");
         $stmt->execute([
             $companySlug,
@@ -186,42 +197,63 @@ try {
         $userSlug = null; // For company profiles, users don't have individual slugs
     }
     
-    // Create user
+    // Create user with minimal required fields
     $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
+    
+    // Check if the users table has the required columns
+    $stmt = $pdo->query("DESCRIBE users");
+    $userColumns = $stmt->fetchAll(PDO::FETCH_COLUMN);
+    
+    if (in_array('is_private_profile', $userColumns) && in_array('profile_slug', $userColumns)) {
+        // New schema with private profile support
+        $stmt = $pdo->prepare("
+            INSERT INTO users 
+            (company_id, first_name, last_name, email, password, role, is_private_profile, profile_slug) 
+            VALUES (?, ?, ?, ?, ?, 'admin', ?, ?)
+        ");
+        $stmt->execute([
+            $companyId, 
+            $firstName, 
+            $lastName, 
+            $email, 
+            $hashedPassword, 
+            $isPrivateProfile ? 1 : 0,
+            $userSlug
+        ]);
+    } else {
+        // Fallback to basic schema
+        $stmt = $pdo->prepare("
+            INSERT INTO users 
+            (company_id, first_name, last_name, email, password, role) 
+            VALUES (?, ?, ?, ?, ?, 'admin')
+        ");
+        $stmt->execute([
+            $companyId, 
+            $firstName, 
+            $lastName, 
+            $email, 
+            $hashedPassword
+        ]);
+    }
+    $userId = $pdo->lastInsertId();
+    
+    // Create initial contact profile for the user
+    $contactSlug = $isPrivateProfile ? $userSlug : strtolower($firstName . '-' . $lastName);
+    
     $stmt = $pdo->prepare("
-        INSERT INTO users 
-        (company_id, first_name, last_name, email, password, role, is_private_profile, profile_slug, created_at, updated_at) 
-        VALUES (?, ?, ?, ?, ?, 'admin', ?, ?, NOW(), NOW())
+        INSERT INTO contacts 
+        (company_id, first_name, last_name, email, position, slug, created_by) 
+        VALUES (?, ?, ?, ?, ?, ?, ?)
     ");
     $stmt->execute([
         $companyId, 
         $firstName, 
         $lastName, 
         $email, 
-        $hashedPassword, 
-        $isPrivateProfile ? 1 : 0,
-        $userSlug
+        $isPrivateProfile ? 'Private Profile' : 'Founder',
+        $contactSlug,
+        $userId
     ]);
-    $userId = $pdo->lastInsertId();
-    
-    // Create initial contact profile for the user
-    if ($isPrivateProfile) {
-        // For private profiles, create contact with user slug
-        $stmt = $pdo->prepare("
-            INSERT INTO contacts 
-            (company_id, first_name, last_name, email, position, slug, created_by, created_at, updated_at) 
-            VALUES (?, ?, ?, ?, 'Private Profile', ?, ?, NOW(), NOW())
-        ");
-        $stmt->execute([$companyId, $firstName, $lastName, $email, $userSlug, $userId]);
-    } else {
-        // For company profiles, create regular contact
-        $stmt = $pdo->prepare("
-            INSERT INTO contacts 
-            (company_id, first_name, last_name, email, position, created_by, created_at, updated_at) 
-            VALUES (?, ?, ?, ?, 'Founder', ?, NOW(), NOW())
-        ");
-        $stmt->execute([$companyId, $firstName, $lastName, $email, $userId]);
-    }
     
     // Commit transaction
     $pdo->commit();
@@ -253,9 +285,11 @@ try {
     }
     
 } catch (Exception $e) {
-    $pdo->rollBack();
+    if ($pdo && $pdo->inTransaction()) {
+        $pdo->rollBack();
+    }
     error_log('Registration error: ' . $e->getMessage());
-    header('Location: /register?error=registration_failed&message=' . urlencode('Registration failed. Please try again.'));
+    header('Location: /register?error=registration_failed&message=' . urlencode('Error: ' . $e->getMessage()));
     exit;
 }
 ?>

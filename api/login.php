@@ -4,9 +4,9 @@ session_start();
 // Database connection
 try {
     $host = 'localhost';
-    $user = 'kontaktverwaltung';
-    $pass = 'Kontakt&Verwaltung';
-    $dbname = 'kontaktverwaltung';
+    $user = 'easycontact';
+    $pass = 'EzC0nt@ct2025!';
+    $dbname = 'easycontact';
     
     $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8mb4", $user, $pass, [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,

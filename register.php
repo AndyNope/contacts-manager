@@ -1,117 +1,29 @@
 <?php
 session_start();
 
-// Database connection
-try {
-    $host = 'localhost';
-    $user = 'kontaktverwaltung';
-    $pass = 'Kontakt&Verwaltung';
-    $dbname = 'kontaktverwaltung';
-    
-    $db = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8mb4", $user, $pass, [
-        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-        PDO::ATTR_EMULATE_PREPARES => false,
-    ]);
-} catch (PDOException $e) {
-    die('Database connection failed: ' . $e->getMessage());
-}
-
 $error = '';
 $success = '';
 $selectedPlan = $_GET['plan'] ?? 'free';
 
-if ($_POST) {
-    $companyName = trim($_POST['company_name']);
-    $companySlug = trim($_POST['company_slug']);
-    $firstName = trim($_POST['first_name']);
-    $lastName = trim($_POST['last_name']);
-    $email = trim($_POST['email']);
-    $password = $_POST['password'];
-    $confirmPassword = $_POST['confirm_password'];
-    $plan = $_POST['plan'];
-    
-    // Validation
-    if (empty($companyName) || empty($companySlug) || empty($firstName) || empty($lastName) || empty($email) || empty($password)) {
-        $error = 'Please fill in all required fields.';
-    } elseif ($password !== $confirmPassword) {
-        $error = 'Passwords do not match.';
-    } elseif (strlen($password) < 8) {
-        $error = 'Password must be at least 8 characters long.';
-    } elseif (!preg_match('/^[a-z0-9-]+$/', $companySlug)) {
-        $error = 'Company URL can only contain lowercase letters, numbers, and hyphens.';
-    } else {
-        try {
-            // Check if company slug already exists
-            $stmt = $db->prepare("SELECT id FROM companies WHERE slug = ?");
-            $stmt->execute([$companySlug]);
-            if ($stmt->fetch()) {
-                $error = 'This company URL is already taken. Please choose another one.';
-            } else {
-                // Check if email already exists
-                $stmt = $db->prepare("SELECT id FROM users WHERE email = ?");
-                $stmt->execute([$email]);
-                if ($stmt->fetch()) {
-                    $error = 'An account with this email already exists.';
-                } else {
-                    // Create company
-                    $db->beginTransaction();
-                    
-                    $stmt = $db->prepare("
-                        INSERT INTO companies (slug, name, subscription_tier, subscription_status) 
-                        VALUES (?, ?, ?, 'active')
-                    ");
-                    $stmt->execute([$companySlug, $companyName, $plan]);
-                    $companyId = $db->lastInsertId();
-                    
-                    // Create user
-                    $passwordHash = password_hash($password, PASSWORD_DEFAULT);
-                    $stmt = $db->prepare("
-                        INSERT INTO users (company_id, email, password_hash, first_name, last_name, role, email_verified_at) 
-                        VALUES (?, ?, ?, ?, ?, 'owner', NOW())
-                    ");
-                    $stmt->execute([$companyId, $email, $passwordHash, $firstName, $lastName]);
-                    $userId = $db->lastInsertId();
-                    
-                    // Create default contact for the owner
-                    $contactSlug = strtolower($firstName . '-' . $lastName);
-                    $contactSlug = preg_replace('/[^a-z0-9-]/', '-', $contactSlug);
-                    $contactSlug = preg_replace('/-+/', '-', $contactSlug);
-                    $contactSlug = trim($contactSlug, '-');
-                    
-                    $stmt = $db->prepare("
-                        INSERT INTO contacts (company_id, created_by_user_id, first_name, last_name, email, slug, is_public, is_featured) 
-                        VALUES (?, ?, ?, ?, ?, ?, TRUE, TRUE)
-                    ");
-                    $stmt->execute([$companyId, $userId, $firstName, $lastName, $email, $contactSlug]);
-                    
-                    $db->commit();
-                    
-                    // Set session and redirect
-                    $_SESSION['user_id'] = $userId;
-                    $_SESSION['company_id'] = $companyId;
-                    $_SESSION['company_slug'] = $companySlug;
-                    $_SESSION['user_role'] = 'owner';
-                    $_SESSION['user_name'] = $firstName . ' ' . $lastName;
-                    
-                    // Redirect to company dashboard
-                    header('Location: /' . $companySlug . '?welcome=1');
-                    exit;
-                }
-            }
-        } catch (PDOException $e) {
-            $db->rollBack();
-            $error = 'Registration failed. Please try again.';
-        }
+// Handle error/success messages from API
+if (isset($_GET['error'])) {
+    switch ($_GET['error']) {
+        case 'validation':
+            $error = $_GET['message'] ?? 'Please check your input and try again.';
+            break;
+        case 'email_exists':
+            $error = 'An account with this email already exists.';
+            break;
+        case 'registration_failed':
+            $error = $_GET['message'] ?? 'Registration failed. Please try again.';
+            break;
+        default:
+            $error = 'An error occurred. Please try again.';
     }
 }
 
-// Generate slug suggestion from company name
-function generateSlug($name) {
-    $slug = strtolower($name);
-    $slug = preg_replace('/[^a-z0-9\s-]/', '', $slug);
-    $slug = preg_replace('/[\s-]+/', '-', $slug);
-    return trim($slug, '-');
+if (isset($_GET['success'])) {
+    $success = 'Account created successfully! Please check your email for verification.';
 }
 ?>
 <!DOCTYPE html>
@@ -119,237 +31,252 @@ function generateSlug($name) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create Account - EasyContact</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <title>Register - EasyContact</title>
+    <meta name="description" content="Create your EasyContact account and start managing professional contacts">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f5f3ff',
+                            100: '#ede9fe',
+                            200: '#ddd6fe',
+                            300: '#c4b5fd',
+                            400: '#a78bfa',
+                            500: '#8b5cf6',
+                            600: '#7c3aed',
+                            700: '#6d28d9',
+                            800: '#5b21b6',
+                            900: '#4c1d95',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
-        :root {
-            --primary-color: #6b00b3;
-            --secondary-color: #8b5cf6;
-            --accent-color: #f59e0b;
-        }
-
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            padding: 20px 0;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
         }
-
+        
         .auth-card {
-            background: white;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
             border-radius: 20px;
-            padding: 40px;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.1);
-            width: 100%;
-            max-width: 500px;
-            margin: 0 auto;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
-
-        .auth-logo {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        .auth-logo img {
-            height: 60px;
-            width: 60px;
-            margin-bottom: 10px;
-        }
-
-        .auth-title {
-            color: var(--primary-color);
-            font-weight: 700;
-            font-size: 1.5rem;
-        }
-
-        .btn-primary {
-            background: var(--primary-color);
-            border: none;
-            padding: 12px 20px;
-            border-radius: 10px;
-        }
-
-        .btn-primary:hover {
-            background: var(--secondary-color);
-        }
-
-        .form-control {
-            border-radius: 10px;
-            border: 2px solid #e5e7eb;
-            padding: 12px 15px;
-        }
-
-        .form-control:focus {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 0.2rem rgba(107, 0, 179, 0.25);
-        }
-
+        
         .plan-selector {
             border: 2px solid #e5e7eb;
-            border-radius: 10px;
-            padding: 15px;
-            margin-bottom: 10px;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
             cursor: pointer;
             transition: all 0.3s ease;
         }
-
+        
         .plan-selector:hover {
-            border-color: var(--primary-color);
+            border-color: #c4b5fd;
+            background: rgba(139, 92, 246, 0.02);
         }
-
+        
         .plan-selector.selected {
-            border-color: var(--primary-color);
-            background: rgba(107, 0, 179, 0.05);
+            border-color: #8b5cf6;
+            background: rgba(139, 92, 246, 0.05);
         }
-
+        
         .plan-price {
             font-weight: 700;
-            color: var(--primary-color);
-        }
-
-        .url-preview {
-            background: #f8fafc;
-            border: 1px solid #e5e7eb;
-            border-radius: 8px;
-            padding: 10px;
-            margin-top: 5px;
-            font-family: monospace;
-            color: #6b7280;
+            color: #8b5cf6;
         }
     </style>
 </head>
-<body>
-    <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-md-8 col-lg-6">
-                <div class="auth-card">
-                    <div class="auth-logo">
-                        <img src="assets/images/easy-contact-logo.svg" alt="EasyContact Logo">
-                        <h1 class="auth-title">Create Your Account</h1>
-                        <p class="text-muted">Start managing your professional contacts today</p>
-                    </div>
-
-                    <?php if ($error): ?>
-                        <div class="alert alert-danger">
-                            <i class="bi bi-exclamation-triangle me-2"></i><?= htmlspecialchars($error) ?>
-                        </div>
-                    <?php endif; ?>
-
-                    <form method="POST" id="registerForm">
-                        <!-- Plan Selection -->
-                        <div class="mb-4">
-                            <label class="form-label">Choose Your Plan</label>
-                            
-                            <div class="plan-selector <?= $selectedPlan === 'free' ? 'selected' : '' ?>" onclick="selectPlan('free')">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <h6 class="mb-1">Free</h6>
-                                        <small class="text-muted">1 contact, basic features</small>
-                                    </div>
-                                    <div class="plan-price">€0/month</div>
-                                </div>
-                                <input type="radio" name="plan" value="free" <?= $selectedPlan === 'free' ? 'checked' : '' ?> style="display: none;">
-                            </div>
-                            
-                            <div class="plan-selector <?= $selectedPlan === 'basic' ? 'selected' : '' ?>" onclick="selectPlan('basic')">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <h6 class="mb-1">Basic</h6>
-                                        <small class="text-muted">50 contacts, custom branding</small>
-                                    </div>
-                                    <div class="plan-price">€9.99/month</div>
-                                </div>
-                                <input type="radio" name="plan" value="basic" <?= $selectedPlan === 'basic' ? 'checked' : '' ?> style="display: none;">
-                            </div>
-                            
-                            <div class="plan-selector <?= $selectedPlan === 'premium' ? 'selected' : '' ?>" onclick="selectPlan('premium')">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <h6 class="mb-1">Premium</h6>
-                                        <small class="text-muted">Unlimited contacts, white-label</small>
-                                    </div>
-                                    <div class="plan-price">€19.99/month</div>
-                                </div>
-                                <input type="radio" name="plan" value="premium" <?= $selectedPlan === 'premium' ? 'checked' : '' ?> style="display: none;">
-                            </div>
-                        </div>
-
-                        <!-- Company Information -->
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="company_name" class="form-label">Company Name</label>
-                                <input type="text" class="form-control" id="company_name" name="company_name" 
-                                       value="<?= htmlspecialchars($_POST['company_name'] ?? '') ?>" required>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="company_slug" class="form-label">Company URL</label>
-                                <input type="text" class="form-control" id="company_slug" name="company_slug" 
-                                       value="<?= htmlspecialchars($_POST['company_slug'] ?? '') ?>" required 
-                                       pattern="[a-z0-9-]+" title="Only lowercase letters, numbers, and hyphens">
-                                <div class="url-preview" id="urlPreview">
-                                    easy-contact.com/<span id="slugPreview">your-company</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Personal Information -->
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="first_name" class="form-label">First Name</label>
-                                <input type="text" class="form-control" id="first_name" name="first_name" 
-                                       value="<?= htmlspecialchars($_POST['first_name'] ?? '') ?>" required>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="last_name" class="form-label">Last Name</label>
-                                <input type="text" class="form-control" id="last_name" name="last_name" 
-                                       value="<?= htmlspecialchars($_POST['last_name'] ?? '') ?>" required>
-                            </div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="email" class="form-label">Email Address</label>
-                            <input type="email" class="form-control" id="email" name="email" 
-                                   value="<?= htmlspecialchars($_POST['email'] ?? '') ?>" required>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="password" class="form-label">Password</label>
-                                <input type="password" class="form-control" id="password" name="password" required minlength="8">
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="confirm_password" class="form-label">Confirm Password</label>
-                                <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
-                            </div>
-                        </div>
-
-                        <div class="mb-3 form-check">
-                            <input type="checkbox" class="form-check-input" id="agree_terms" required>
-                            <label class="form-check-label" for="agree_terms">
-                                I agree to the <a href="/terms" target="_blank" class="text-decoration-none">Terms of Service</a> and <a href="/privacy" target="_blank" class="text-decoration-none">Privacy Policy</a>
-                            </label>
-                        </div>
-
-                        <button type="submit" class="btn btn-primary w-100 mb-3">
-                            <i class="bi bi-person-plus me-2"></i>Create Account
-                        </button>
-                    </form>
-
-                    <div class="text-center">
-                        <p class="mb-2">Already have an account?</p>
-                        <a href="login" class="btn btn-outline-primary w-100">
-                            <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
-                        </a>
-                    </div>
-
-                    <div class="text-center mt-3">
-                        <a href="/" class="text-muted text-decoration-none">
-                            <i class="bi bi-arrow-left me-1"></i>Back to Homepage
-                        </a>
+<body class="min-h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-2xl">
+        <div class="auth-card p-8">
+            <!-- Header -->
+            <div class="text-center mb-8">
+                <div class="flex items-center justify-center mb-4">
+                    <div class="bg-primary-500 text-white p-3 rounded-full">
+                        <i class="fas fa-address-book text-2xl"></i>
                     </div>
                 </div>
+                <h1 class="text-3xl font-bold text-gray-800 mb-2">Create Your Account</h1>
+                <p class="text-gray-600">Start managing your professional contacts today</p>
+            </div>
+
+            <!-- Error/Success Messages -->
+            <?php if ($error): ?>
+                <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
+                    <div class="flex items-center">
+                        <i class="fas fa-exclamation-triangle mr-2"></i>
+                        <span><?= htmlspecialchars($error) ?></span>
+                    </div>
+                </div>
+            <?php endif; ?>
+
+            <?php if ($success): ?>
+                <div class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-6">
+                    <div class="flex items-center">
+                        <i class="fas fa-check-circle mr-2"></i>
+                        <span><?= htmlspecialchars($success) ?></span>
+                    </div>
+                </div>
+            <?php endif; ?>
+
+            <!-- Registration Form -->
+            <form method="POST" action="/api/register_debug.php" id="registerForm">
+                <!-- Plan Selection -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-3">Choose Your Plan</label>
+                    
+                    <div class="plan-selector <?= $selectedPlan === 'free' ? 'selected' : '' ?>" onclick="selectPlan('free')">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <h6 class="font-semibold text-gray-800">Free</h6>
+                                <small class="text-gray-500">Private profile, perfect for individuals</small>
+                            </div>
+                            <div class="plan-price">€0/month</div>
+                        </div>
+                        <input type="radio" name="plan" value="free" <?= $selectedPlan === 'free' ? 'checked' : '' ?> style="display: none;">
+                    </div>
+                    
+                    <div class="plan-selector <?= $selectedPlan === 'basic' ? 'selected' : '' ?>" onclick="selectPlan('basic')">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <h6 class="font-semibold text-gray-800">Basic</h6>
+                                <small class="text-gray-500">50 contacts, company branding</small>
+                            </div>
+                            <div class="plan-price">€9.99/month</div>
+                        </div>
+                        <input type="radio" name="plan" value="basic" <?= $selectedPlan === 'basic' ? 'checked' : '' ?> style="display: none;">
+                    </div>
+                    
+                    <div class="plan-selector <?= $selectedPlan === 'premium' ? 'selected' : '' ?>" onclick="selectPlan('premium')">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <h6 class="font-semibold text-gray-800">Premium</h6>
+                                <small class="text-gray-500">Unlimited contacts, white-label</small>
+                            </div>
+                            <div class="plan-price">€29.99/month</div>
+                        </div>
+                        <input type="radio" name="plan" value="premium" <?= $selectedPlan === 'premium' ? 'checked' : '' ?> style="display: none;">
+                    </div>
+                </div>
+
+                <!-- Company Information -->
+                <div id="companyFields" class="mb-6">
+                    <div class="mb-4">
+                        <label for="company_name" class="block text-sm font-medium text-gray-700 mb-2">
+                            Company Name 
+                            <small class="text-gray-500 font-normal">(Optional for Free Plan)</small>
+                        </label>
+                        <input type="text" 
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent" 
+                               id="company_name" 
+                               name="company_name" 
+                               value="<?= htmlspecialchars($_POST['company_name'] ?? '') ?>"
+                               placeholder="Leave empty for private profile">
+                        <small class="text-gray-500 mt-1 block">
+                            Free plan: Leave empty for a private profile like /private/profile/your-name
+                        </small>
+                    </div>
+                </div>
+
+                <!-- Personal Information -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <div>
+                        <label for="first_name" class="block text-sm font-medium text-gray-700 mb-2">First Name</label>
+                        <input type="text" 
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent" 
+                               id="first_name" 
+                               name="first_name" 
+                               value="<?= htmlspecialchars($_POST['first_name'] ?? '') ?>" 
+                               required>
+                    </div>
+                    <div>
+                        <label for="last_name" class="block text-sm font-medium text-gray-700 mb-2">Last Name</label>
+                        <input type="text" 
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent" 
+                               id="last_name" 
+                               name="last_name" 
+                               value="<?= htmlspecialchars($_POST['last_name'] ?? '') ?>" 
+                               required>
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <label for="email" class="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+                    <input type="email" 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent" 
+                           id="email" 
+                           name="email" 
+                           value="<?= htmlspecialchars($_POST['email'] ?? '') ?>" 
+                           required>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <div>
+                        <label for="password" class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                        <input type="password" 
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent" 
+                               id="password" 
+                               name="password" 
+                               required 
+                               minlength="8">
+                    </div>
+                    <div>
+                        <label for="confirm_password" class="block text-sm font-medium text-gray-700 mb-2">Confirm Password</label>
+                        <input type="password" 
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent" 
+                               id="confirm_password" 
+                               name="confirm_password" 
+                               required>
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <label class="flex items-start">
+                        <input type="checkbox" 
+                               class="mt-1 mr-3 text-primary-500 border-gray-300 rounded focus:ring-primary-500" 
+                               id="agree_terms" 
+                               name="agree_terms" 
+                               required>
+                        <span class="text-sm text-gray-700">
+                            I agree to the <a href="/terms" target="_blank" class="text-primary-600 hover:text-primary-700 underline">Terms of Service</a> and <a href="/privacy" target="_blank" class="text-primary-600 hover:text-primary-700 underline">Privacy Policy</a>
+                        </span>
+                    </label>
+                </div>
+
+                <button type="submit" 
+                        class="w-full bg-primary-600 text-white py-3 px-6 rounded-lg hover:bg-primary-700 transition-colors font-medium">
+                    <i class="fas fa-user-plus mr-2"></i>Create Account
+                </button>
+            </form>
+
+            <!-- Footer Links -->
+            <div class="text-center mt-8">
+                <p class="text-gray-600 mb-4">Already have an account?</p>
+                <a href="/login" class="w-full inline-block bg-gray-100 text-gray-700 py-3 px-6 rounded-lg hover:bg-gray-200 transition-colors">
+                    <i class="fas fa-sign-in-alt mr-2"></i>Sign In
+                </a>
+            </div>
+
+            <div class="text-center mt-6">
+                <a href="/" class="text-gray-500 hover:text-gray-700 transition-colors">
+                    <i class="fas fa-arrow-left mr-1"></i>Back to Homepage
+                </a>
             </div>
         </div>
     </div>
@@ -364,24 +291,21 @@ function generateSlug($name) {
             
             // Check the radio button
             document.querySelector(`input[value="${plan}"]`).checked = true;
-        }
-
-        // Auto-generate slug from company name
-        document.getElementById('company_name').addEventListener('input', function() {
-            const name = this.value;
-            const slug = name.toLowerCase()
-                .replace(/[^a-z0-9\s-]/g, '')
-                .replace(/[\s-]+/g, '-')
-                .replace(/^-|-$/g, '');
             
-            document.getElementById('company_slug').value = slug;
-            document.getElementById('slugPreview').textContent = slug || 'your-company';
-        });
-
-        // Update preview when slug is manually changed
-        document.getElementById('company_slug').addEventListener('input', function() {
-            document.getElementById('slugPreview').textContent = this.value || 'your-company';
-        });
+            // Show/hide company fields based on plan
+            const companyFields = document.getElementById('companyFields');
+            const companyNameInput = document.getElementById('company_name');
+            
+            if (plan === 'free') {
+                // For free plan, company name is optional
+                companyNameInput.required = false;
+                companyFields.style.display = 'block';
+            } else {
+                // For paid plans, company name is required
+                companyNameInput.required = true;
+                companyFields.style.display = 'block';
+            }
+        }
 
         // Password confirmation validation
         document.getElementById('confirm_password').addEventListener('input', function() {
@@ -393,6 +317,12 @@ function generateSlug($name) {
             } else {
                 this.setCustomValidity('');
             }
+        });
+
+        // Initialize plan selection on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const selectedPlan = document.querySelector('input[name="plan"]:checked').value;
+            selectPlan(selectedPlan);
         });
     </script>
 </body>

@@ -40,16 +40,16 @@ cd contacts-manager
 ### 2. Datenbank einrichten
 ```sql
 -- Datenbank erstellen
-CREATE DATABASE kontaktverwaltung;
+CREATE DATABASE easycontact;
 
 -- Benutzer erstellen
-CREATE USER 'kontaktverwaltung'@'localhost' IDENTIFIED BY 'Kontakt&Verwaltung';
-GRANT ALL PRIVILEGES ON kontaktverwaltung.* TO 'kontaktverwaltung'@'localhost';
+CREATE USER 'easycontact'@'localhost' IDENTIFIED BY 'EzC0nt@ct2025!';
+GRANT ALL PRIVILEGES ON easycontact.* TO 'easycontact'@'localhost';
 FLUSH PRIVILEGES;
 
 -- Schema importieren
-mysql -u kontaktverwaltung -p kontaktverwaltung < database/schema.sql
-mysql -u kontaktverwaltung -p kontaktverwaltung < setup_private_profiles.sql
+mysql -u easycontact -p easycontact < database/schema.sql
+mysql -u easycontact -p easycontact < setup_private_profiles.sql
 ```
 
 ### 3. PayPal-Integration konfigurieren
@@ -95,16 +95,16 @@ location / {
 ### Datenbank-Verbindung
 Die Datenbankverbindung ist bereits in allen Dateien konfiguriert:
 - **Host**: localhost
-- **Database**: kontaktverwaltung
-- **User**: kontaktverwaltung
-- **Password**: Kontakt&Verwaltung
+- **Database**: easycontact
+- **User**: easycontact
+- **Password**: EzC0nt@ct2025!
 
 ### PayPal-Konfiguration
 In `config/paypal.php`:
 - ✅ **Client ID**: Bereits konfiguriert
 - ✅ **Client Secret**: Bereits konfiguriert
 - ✅ **Subscription Plans**: Basic & Premium bereits erstellt
-- ⚠️ **Webhook ID**: Nach Webhook-Erstellung eintragen
+- ✅ **Webhook ID**: 7TS68256FT808511N (konfiguriert)
 
 ## 🌐 URL-Struktur
 
@@ -277,9 +277,10 @@ ams/
 - [x] Free Plan wiederhergestellt
 - [x] Multi-Tenant Routing System
 - [x] Webhook Handler erstellt
+- [x] Webhook-ID konfiguriert (7TS68256FT808511N)
+- [x] Registrierung-500-Fehler behoben
 
 ### In Progress 🔄
-- [ ] Webhook-ID in PayPal Dashboard erstellen
 - [ ] SSL-Zertifikat für Webhook-Testing
 - [ ] Produktions-Deployment
 

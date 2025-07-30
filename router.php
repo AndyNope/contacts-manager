@@ -9,9 +9,9 @@ session_start();
 // Database connection
 try {
     $host = 'localhost';
-    $user = 'kontaktverwaltung';
-    $pass = 'Kontakt&Verwaltung';
-    $dbname = 'kontaktverwaltung';
+    $user = 'easycontact';
+    $pass = 'EzC0nt@ct2025!';
+    $dbname = 'easycontact';
     
     $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8mb4", $user, $pass, [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
@@ -92,6 +92,13 @@ class Router {
         // API routes
         if ($this->segments[0] === 'api') {
             $this->handleApiRoute();
+            return;
+        }
+        
+        // Private profile routes: /private/profile/:username
+        if (count($this->segments) === 3 && $this->segments[0] === 'private' && $this->segments[1] === 'profile') {
+            $userSlug = $this->segments[2];
+            $this->showPrivateProfile($userSlug);
             return;
         }
         
