@@ -1,66 +1,15 @@
-// Admin JavaScript Funktionalität
+// Admin JavaScript Funktionalität - Commercial Version
 
-// Profilbild hochladen
+// Profilbild hochladen - Placeholder für neue API
 function uploadProfileImage(input) {
     const file = input.files[0];
     if (!file) return;
     
-    const formData = new FormData();
-    formData.append('profile_image', file);
+    console.log('Image upload will be implemented with new multi-tenant backend');
     
-    // Progress anzeigen
-    const progressContainer = document.getElementById('uploadProgress');
-    const progressBar = progressContainer.querySelector('.progress-bar');
-    const messageDiv = document.getElementById('uploadMessage');
-    
-    progressContainer.style.display = 'block';
-    progressBar.style.width = '0%';
-    messageDiv.innerHTML = '';
-    
-    // Upload via fetch
-    fetch('upload_handler.php', {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => response.json())
-    .then(data => {
-        progressContainer.style.display = 'none';
-        
-        if (data.success) {
-            // URL in das URL-Feld setzen
-            document.getElementById('foto_url').value = data.url;
-            
-            // Vorschau aktualisieren
-            updateImagePreview();
-            
-            // Erfolgs-Nachricht
-            messageDiv.innerHTML = `<small class="text-success"><i class="bi bi-check-circle me-1"></i>${data.message}</small>`;
-            
-            // Datei-Input zurücksetzen
-            input.value = '';
-        } else {
-            messageDiv.innerHTML = `<small class="text-danger"><i class="bi bi-exclamation-triangle me-1"></i>${data.error}</small>`;
-        }
-    })
-    .catch(error => {
-        progressContainer.style.display = 'none';
-        messageDiv.innerHTML = `<small class="text-danger"><i class="bi bi-exclamation-triangle me-1"></i>Upload-Fehler: ${error.message}</small>`;
-        console.error('Upload error:', error);
-    });
-    
-    // Fake Progress (da fetch keine echte Progress-Events hat)
-    let progress = 0;
-    const progressInterval = setInterval(() => {
-        progress += Math.random() * 30;
-        if (progress > 90) progress = 90;
-        progressBar.style.width = progress + '%';
-    }, 200);
-    
-    // Progress beenden wenn Upload fertig
-    setTimeout(() => {
-        clearInterval(progressInterval);
-        progressBar.style.width = '100%';
-    }, 1000);
+    // TODO: Implement new upload API for multi-tenant system
+    // This will need to handle company-specific uploads
+    alert('Image upload functionality will be available in the final commercial version');
 }
 
 // Profilbild entfernen

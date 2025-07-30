@@ -44,7 +44,7 @@ try {
         
         // Suche nach einem Segment mit Bindestrich (Profil-Name)
         foreach ($segments as $segment) {
-            if (strpos($segment, '-') !== false && $segment !== 'admin_login') {
+            if (strpos($segment, '-') !== false) {
                 $profileName = $segment;
                 if ($debug) $debug_info .= "Name aus URL-Segment: " . htmlspecialchars($profileName) . "<br>";
                 break;

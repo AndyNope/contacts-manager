@@ -118,7 +118,7 @@ function isLoggedIn() {
 
 function requireLogin() {
     if (!isLoggedIn()) {
-        header('Location: admin_login');
+        header('Location: /login');
         exit;
     }
 }

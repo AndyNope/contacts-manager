@@ -2,16 +2,6 @@
 require_once 'config.php';
 $contactManager = new ContactManager();
 $contacts = $contactManager->getAllContacts();
-// Admin-Links laden
-$settingsFile = 'admin_settings.json';
-$settings = [];
-if (file_exists($settingsFile)) {
-    $settings = json_decode(file_get_contents($settingsFile), true) ?: [];
-}
-function admin_link($key) {
-    global $settings;
-    return !empty($settings[$key]) ? $settings[$key] : null;
-}
 ?>
 <!DOCTYPE html>
 <html lang="de">
@@ -453,20 +443,16 @@ function admin_link($key) {
                         </p>
                     </div>
                     <div class="col-md-4 text-end d-none d-md-block">
-                        <!-- Auftragsbutton entfernt -->
                         <a href="admin" class="btn btn-outline-light me-2">
                             <i class="bi bi-gear"></i> Administration
                         </a>
-                        <?php if (admin_link('phone')): ?>
-                        <a href="tel:<?= htmlspecialchars(admin_link('phone')) ?>" class="btn btn-warning">
-                            <i class="bi bi-telephone-fill"></i> <?= htmlspecialchars(admin_link('phone')) ?>
+                        <a href="tel:+41525601440" class="btn btn-warning">
+                            <i class="bi bi-telephone-fill"></i> +41 52 560 14 40
                         </a>
-                        <?php endif; ?>
                     </div>
                     <!-- Mobile Header Buttons -->
                     <div class="col-12 d-md-none mt-3">
                         <div class="d-grid gap-2">
-                            <!-- Auftragsbutton entfernt (mobile) -->
                             <a href="tel:+41525601440" class="btn btn-warning">
                                 <i class="bi bi-telephone-fill"></i> +41 52 560 14 40
                             </a>
@@ -532,10 +518,9 @@ function admin_link($key) {
                         </div>
                         <div class="col-md-4 text-end">
                             <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                                <!-- Auftragsformular Button -->
-                                <button class="btn btn-warning btn-lg fw-bold" onclick="window.location.href='auftrag'">
+                                <button class="btn btn-warning btn-lg fw-bold" onclick="window.open('https://schuetz-schluesselservice.ch/kontakt', '_blank')">
                                     <i class="bi bi-clipboard-check me-2"></i>
-                                    Auftrag erstellen
+                                    Kontakt aufnehmen
                                 </button>
                             </div>
                         </div>
@@ -847,46 +832,18 @@ function admin_link($key) {
     <!-- Service & Social Media Links -->
     <div class="container my-4">
         <div class="d-flex flex-wrap gap-2 justify-content-center">
-            <?php if (admin_link('google_review_url')): ?>
-                <a href="<?= htmlspecialchars(admin_link('google_review_url')) ?>" target="_blank" class="btn btn-outline-primary">
-                    <i class="bi bi-star-fill"></i> Google Bewertung
-                </a>
-            <?php endif; ?>
-            <?php if (admin_link('maps_url')): ?>
-                <a href="<?= htmlspecialchars(admin_link('maps_url')) ?>" target="_blank" class="btn btn-outline-success">
-                    <i class="bi bi-geo-alt-fill"></i> Navigation
-                </a>
-            <?php endif; ?>
-            <?php if (admin_link('website_url')): ?>
-                <a href="<?= htmlspecialchars(admin_link('website_url')) ?>" target="_blank" class="btn btn-outline-dark">
-                    <i class="bi bi-globe2"></i> Webseite
-                </a>
-            <?php endif; ?>
-            <?php if (admin_link('email')): ?>
-                <a href="mailto:<?= htmlspecialchars(admin_link('email')) ?>" class="btn btn-outline-secondary">
-                    <i class="bi bi-envelope-fill"></i> E-Mail
-                </a>
-            <?php endif; ?>
-            <?php if (admin_link('instagram_url')): ?>
-                <a href="<?= htmlspecialchars(admin_link('instagram_url')) ?>" target="_blank" class="btn btn-outline-danger">
-                    <i class="bi bi-instagram"></i> Instagram
-                </a>
-            <?php endif; ?>
-            <?php if (admin_link('facebook_url')): ?>
-                <a href="<?= htmlspecialchars(admin_link('facebook_url')) ?>" target="_blank" class="btn btn-outline-primary">
-                    <i class="bi bi-facebook"></i> Facebook
-                </a>
-            <?php endif; ?>
-            <?php if (admin_link('linkedin_url')): ?>
-                <a href="<?= htmlspecialchars(admin_link('linkedin_url')) ?>" target="_blank" class="btn btn-outline-info">
-                    <i class="bi bi-linkedin"></i> LinkedIn
-                </a>
-            <?php endif; ?>
-            <?php if (admin_link('whatsapp_url')): ?>
-                <a href="<?= htmlspecialchars(admin_link('whatsapp_url')) ?>" target="_blank" class="btn btn-outline-success">
-                    <i class="bi bi-whatsapp"></i> WhatsApp
-                </a>
-            <?php endif; ?>
+            <a href="https://g.page/r/CXxXxXxXxXxXxXEBM/review" target="_blank" class="btn btn-outline-primary">
+                <i class="bi bi-star-fill"></i> Google Bewertung
+            </a>
+            <a href="https://goo.gl/maps/xxxxx" target="_blank" class="btn btn-outline-success">
+                <i class="bi bi-geo-alt-fill"></i> Navigation
+            </a>
+            <a href="https://schuetz-schluesselservice.ch" target="_blank" class="btn btn-outline-dark">
+                <i class="bi bi-globe2"></i> Webseite
+            </a>
+            <a href="mailto:info@schuetz-schluesselservice.ch" class="btn btn-outline-secondary">
+                <i class="bi bi-envelope-fill"></i> E-Mail
+            </a>
         </div>
     </div>
     <!-- PDF Präsentations Modal -->
@@ -977,11 +934,9 @@ function admin_link($key) {
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <?php if (admin_link('google_review_url')): ?>
-                    <a href="<?= htmlspecialchars(admin_link('google_review_url')) ?>" target="_blank" class="btn btn-primary">
+                    <a href="https://g.page/r/CXxXxXxXxXxXxXEBM/review" target="_blank" class="btn btn-primary">
                         <i class="bi bi-star me-2"></i>Bewertung abgeben
                     </a>
-                    <?php endif; ?>
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Schließen</button>
                 </div>
             </div>

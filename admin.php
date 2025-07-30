@@ -70,7 +70,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // Logout
 if (isset($_GET['logout'])) {
     session_destroy();
-    header('Location: admin_login');
+    header('Location: /login');
     exit;
 }
 ?>
@@ -422,16 +422,6 @@ if (isset($_GET['logout'])) {
                                     <li class="nav-item">
                                         <a href="index" class="nav-link text-white">
                                             <i class="bi bi-eye me-1"></i> Kontakte anzeigen
-                                        </a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a href="admin_users.php" class="nav-link text-white">
-                                            <i class="bi bi-people me-1"></i> Admin-Benutzer
-                                        </a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a href="admin_links.php" class="nav-link text-white">
-                                            <i class="bi bi-link-45deg me-1"></i> Links verwalten
                                         </a>
                                     </li>
                                     <li class="nav-item ms-lg-2">

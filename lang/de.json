@@ -1,0 +1,115 @@
+{
+  "app": {
+    "name": "EasyContact",
+    "tagline": "Professionelle Kontaktverwaltung leicht gemacht",
+    "description": "Erstellen, verwalten und teilen Sie professionelle Kontaktprofile mit QR-Codes und Visitenkarten."
+  },
+  "navigation": {
+    "home": "Startseite",
+    "features": "Funktionen",
+    "pricing": "Preise",
+    "login": "Anmelden",
+    "register": "Loslegen",
+    "dashboard": "Dashboard",
+    "contacts": "Kontakte",
+    "settings": "Einstellungen",
+    "logout": "Abmelden"
+  },
+  "auth": {
+    "login": "Anmelden",
+    "register": "Registrieren",
+    "email": "E-Mail",
+    "password": "Passwort",
+    "company_name": "Firmenname",
+    "company_slug": "Firmen-URL",
+    "forgot_password": "Passwort vergessen?",
+    "remember_me": "Angemeldet bleiben",
+    "create_account": "Konto erstellen",
+    "already_have_account": "Haben Sie bereits ein Konto?",
+    "dont_have_account": "Noch kein Konto?"
+  },
+  "contacts": {
+    "add_contact": "Kontakt hinzufügen",
+    "edit_contact": "Kontakt bearbeiten",
+    "delete_contact": "Kontakt löschen",
+    "first_name": "Vorname",
+    "last_name": "Nachname",
+    "position": "Position",
+    "company": "Firma",
+    "phone": "Telefon",
+    "email": "E-Mail",
+    "website": "Website",
+    "address": "Adresse",
+    "photo": "Foto",
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "view_profile": "Profil anzeigen",
+    "download_vcard": "vCard herunterladen",
+    "generate_qr": "QR-Code generieren",
+    "business_card": "Visitenkarte"
+  },
+  "business_card": {
+    "preview": "Vorschau",
+    "download": "Herunterladen",
+    "front_side": "Vorderseite",
+    "back_side": "Rückseite",
+    "scan_contact": "Kontakt scannen",
+    "emergency_service": "24/7 Notfalldienst"
+  },
+  "subscription": {
+    "free": "Kostenlos",
+    "basic": "Basic",
+    "premium": "Premium",
+    "current_plan": "Aktueller Plan",
+    "upgrade": "Upgrade",
+    "downgrade": "Downgrade",
+    "cancel": "Abonnement kündigen",
+    "billing": "Abrechnung",
+    "usage": "Nutzung",
+    "contacts_used": "Kontakte verwendet",
+    "contacts_limit": "Kontakte-Limit"
+  },
+  "features": {
+    "professional_profiles": "Professionelle Profile",
+    "qr_codes": "QR-Codes",
+    "business_cards": "Visitenkarten",
+    "custom_branding": "Custom Branding",
+    "analytics": "Analytics",
+    "api_access": "API-Zugang",
+    "multi_language": "Mehrsprachig",
+    "responsive_design": "Responsive Design"
+  },
+  "common": {
+    "loading": "Wird geladen...",
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "delete": "Löschen",
+    "edit": "Bearbeiten",
+    "view": "Anzeigen",
+    "search": "Suchen",
+    "filter": "Filter",
+    "export": "Exportieren",
+    "import": "Importieren",
+    "settings": "Einstellungen",
+    "profile": "Profil",
+    "help": "Hilfe",
+    "contact_us": "Kontakt",
+    "privacy": "Datenschutz",
+    "terms": "Nutzungsbedingungen"
+  },
+  "messages": {
+    "success": {
+      "contact_saved": "Kontakt erfolgreich gespeichert",
+      "contact_deleted": "Kontakt erfolgreich gelöscht",
+      "profile_updated": "Profil erfolgreich aktualisiert",
+      "settings_saved": "Einstellungen erfolgreich gespeichert"
+    },
+    "error": {
+      "generic": "Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.",
+      "contact_not_found": "Kontakt nicht gefunden",
+      "unauthorized": "Unbefugter Zugriff",
+      "validation_failed": "Bitte überprüfen Sie Ihre Eingaben und versuchen Sie es erneut",
+      "subscription_required": "Diese Funktion erfordert ein Abonnement"
+    }
+  }
+}
