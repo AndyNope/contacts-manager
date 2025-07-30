@@ -1,215 +1,293 @@
-# Digitale Kontaktverwaltung 🇨🇭
+# EasyContact - Professional Contact Management Platform
 
-Eine responsive Webanwendung zur Verwaltung und zum Download von digitalen Kontakten im vCard-Format, speziell angepasst für Schweizer Unternehmen.
+Ein modernes, multi-tenant SaaS-System für professionelle Kontaktverwaltung mit PayPal-Integration und privaten Profilen.
 
-## Features
+## 🚀 Features
 
-- 📱 **Responsive Design** - Funktioniert auf Desktop, Tablet und Smartphone
-- 👥 **Kontaktliste** - Übersichtliche Darstellung aller Kontakte
-- 🔍 **Suche & Filter** - Schnelle Suche nach Name, Position oder Firma
-- 📋 **Kontakt-Details** - Vollständige Informationen in einem Modal
-- ⬇️ **vCard-Download** - Einzelne oder mehrere Kontakte gleichzeitig herunterladen
-- ✅ **Mehrfachauswahl** - Alle oder ausgewählte Kontakte auf einmal herunterladen
-- 🔐 **Admin-Bereich** - Kontakte hinzufügen, bearbeiten und löschen
-- 🎨 **Moderne UI** - Bootstrap 5 mit benutzerfreundlichem Design
-- 🇨🇭 **Schweiz-spezifisch** - Telefonnummern, Adressen und Beispieldaten für die Schweiz
-- 🎴 **PDF-Visitenkarten** - Professionelle Visitenkarten mit QR-Codes generieren
-- 📱 **QR-Code Integration** - vCard-Daten als QR-Code für einfaches Scannen
-- 🎨 **Corporate Design** - Anpassbares Branding und Farbschema
-- 🖨️ **Print-Optimierung** - Perfekt für professionellen Druck (85mm x 54mm)
+### ✨ **Kern-Funktionalitäten**
+- **Multi-Tenant-Architektur** - Jedes Unternehmen hat seine eigene Instanz
+- **Private Profile** - Sichere persönliche Profile unter `/private/profile/username`
+- **Unternehmensprofile** - Branded Company Pages unter `/company-name`
+- **PayPal-Integration** - Automatische Subscription-Verwaltung
+- **Responsive Design** - Mobile-first mit Dark/Light Mode
+- **Analytics & Tracking** - Detaillierte Profil-Statistiken
 
-## Systemanforderungen
+### 🔒 **Sicherheit & Datenschutz**
+- **Sichere Authentifizierung** - Password-Hashing mit PHP
+- **Private Profile-URLs** - Nur über direkten Link zugänglich
+- **GDPR-konform** - Privacy Policy und Terms of Service
+- **Webhook-Verifizierung** - Sichere PayPal-Kommunikation
 
-- **Webserver** mit PHP 7.4 oder höher
-- **MariaDB/MySQL** Datenbank
-- **Browser** mit JavaScript-Unterstützung
+### 💳 **Subscription-Pläne**
+- **Free Plan** - Private Profile, 1 Kontakt
+- **Basic Plan** - €9.99/Monat, 50 Kontakte, Company Branding
+- **Premium Plan** - €29.99/Monat, Unlimited Kontakte, Advanced Features
 
-## Installation
+## 🛠 Installation & Setup
 
-### 1. Datenbank einrichten
+### Systemanforderungen
+- PHP 7.4+ mit PDO MySQL
+- MySQL/MariaDB 5.7+
+- Apache/Nginx mit mod_rewrite
+- PayPal Developer Account
 
-1. Erstellen Sie die MariaDB-Datenbank mit dem bereitgestellten SQL-Script:
-   ```sql
-   mysql -u kontaktverwaltung -p < database_setup.sql
+### 1. Repository klonen
+```bash
+git clone https://github.com/AndyNope/contacts-manager.git
+cd contacts-manager
+```
+
+### 2. Datenbank einrichten
+```sql
+-- Datenbank erstellen
+CREATE DATABASE kontaktverwaltung;
+
+-- Benutzer erstellen
+CREATE USER 'kontaktverwaltung'@'localhost' IDENTIFIED BY 'Kontakt&Verwaltung';
+GRANT ALL PRIVILEGES ON kontaktverwaltung.* TO 'kontaktverwaltung'@'localhost';
+FLUSH PRIVILEGES;
+
+-- Schema importieren
+mysql -u kontaktverwaltung -p kontaktverwaltung < database/schema.sql
+mysql -u kontaktverwaltung -p kontaktverwaltung < setup_private_profiles.sql
+```
+
+### 3. PayPal-Integration konfigurieren
+
+#### PayPal Subscription Plans erstellen:
+```bash
+php setup_paypal_db.php
+```
+
+#### PayPal Webhook einrichten:
+1. **PayPal Developer Dashboard** öffnen: https://developer.paypal.com
+2. **Deine App auswählen**
+3. **"Webhooks" → "Add Webhook"**
+4. **Webhook URL**: `https://deine-domain.com/api/paypal_webhook.php`
+5. **Events auswählen**:
+   - `BILLING.SUBSCRIPTION.CREATED`
+   - `BILLING.SUBSCRIPTION.ACTIVATED`
+   - `BILLING.SUBSCRIPTION.CANCELLED`
+   - `BILLING.SUBSCRIPTION.SUSPENDED`
+   - `BILLING.SUBSCRIPTION.EXPIRED`
+   - `PAYMENT.SALE.COMPLETED`
+6. **Webhook-ID** in `config/paypal.php` eintragen
+
+### 4. Web Server konfigurieren
+
+#### Apache (.htaccess bereits vorhanden):
+```apache
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ router.php [QSA,L]
+```
+
+#### Nginx:
+```nginx
+location / {
+    try_files $uri $uri/ /router.php?$query_string;
+}
+```
+
+## 🔧 Konfiguration
+
+### Datenbank-Verbindung
+Die Datenbankverbindung ist bereits in allen Dateien konfiguriert:
+- **Host**: localhost
+- **Database**: kontaktverwaltung
+- **User**: kontaktverwaltung
+- **Password**: Kontakt&Verwaltung
+
+### PayPal-Konfiguration
+In `config/paypal.php`:
+- ✅ **Client ID**: Bereits konfiguriert
+- ✅ **Client Secret**: Bereits konfiguriert
+- ✅ **Subscription Plans**: Basic & Premium bereits erstellt
+- ⚠️ **Webhook ID**: Nach Webhook-Erstellung eintragen
+
+## 🌐 URL-Struktur
+
+### Öffentliche Seiten
+- `/` - Homepage/Marketing
+- `/login` - Benutzer-Login
+- `/register` - Registrierung
+- `/terms` - Nutzungsbedingungen
+- `/privacy` - Datenschutz
+
+### Private Profile (Free Plan)
+- `/private/profile/john-doe` - Private Benutzerprofile
+- Sicher, nur über direkten Link zugänglich
+- Ideal für Freelancer und Einzelpersonen
+
+### Unternehmensprofile (Basic/Premium)
+- `/company-name` - Unternehmens-Kontaktliste
+- `/company-name/profile/contact-name` - Einzelkontakt
+- Company Branding und Custom Design
+
+### API-Endpunkte
+- `/api/register.php` - Registrierung
+- `/api/login.php` - Authentifizierung
+- `/api/paypal_webhook.php` - PayPal Webhooks
+- `/api/subscription_success.php` - Subscription Bestätigung
+
+## 📊 Datenbank-Schema
+
+### Haupttabellen
+- **companies** - Unternehmen/Mandanten
+- **users** - Benutzer mit Rollen
+- **contacts** - Kontaktprofile
+- **analytics_events** - Tracking & Analytics
+- **payment_logs** - PayPal-Transaktionen
+
+### Private Profile Schema
+```sql
+-- Zusätzliche Spalten für Private Profile
+ALTER TABLE users ADD COLUMN is_private_profile TINYINT(1) DEFAULT 0;
+ALTER TABLE users ADD COLUMN profile_slug VARCHAR(255) NULL;
+ALTER TABLE contacts ADD COLUMN slug VARCHAR(255) NULL;
+ALTER TABLE contacts ADD COLUMN profile_views INT DEFAULT 0;
+```
+
+## 🔄 Deployment
+
+### Produktionsumgebung
+1. **PayPal auf Live umstellen**:
+   ```php
+   // In config/paypal.php
+   public $mode = 'live';
+   public $baseUrl = 'https://api-m.paypal.com';
    ```
 
-2. Oder führen Sie das SQL-Script manuell in phpMyAdmin aus.
+2. **SSL-Zertifikat** installieren (erforderlich für PayPal)
 
-### 2. Dateien hochladen
+3. **Webhook-URL** auf Live-Domain aktualisieren
 
-1. Laden Sie alle Dateien in Ihr Webserver-Verzeichnis hoch
-2. Stellen Sie sicher, dass die Ordnerstruktur korrekt ist
+4. **Error Logging** konfigurieren:
+   ```php
+   // Webhook-Debugging in Produktion deaktivieren
+   // error_log('PayPal Webhook received: ' . $webhook_payload);
+   ```
 
-### 3. Login-Problem beheben (falls nötig)
+## 🧪 Testing
 
-Falls das Admin-Login nicht funktioniert:
+### Lokale Entwicklung
+```bash
+# PHP Development Server
+php -S localhost:8000 router.php
 
-1. Öffnen Sie `debug_login.php` in Ihrem Browser
-2. Führen Sie die Diagnose durch
-3. Oder verwenden Sie `generate_password_hash.php` um einen neuen Hash zu erstellen
-4. Aktualisieren Sie die Datenbank mit dem neuen Hash
+# Mit Apache/Nginx testen
+# Stelle sicher, dass mod_rewrite aktiviert ist
+```
 
-### 4. Admin-Zugang
+### PayPal Sandbox Testing
+- Verwende PayPal Sandbox-Accounts für Tests
+- Teste alle Subscription-Flows
+- Prüfe Webhook-Funktionalität mit ngrok
 
-**Standard-Login:**
-- Benutzername: `admin`
-- Passwort: `admin123`
-
-**Sicherheitshinweis:** Ändern Sie das Admin-Passwort nach der Installation!
-
-## Schweiz-spezifische Anpassungen
-
-### Telefonnummern
-- Format: `+41 XX XXX XX XX`
-- Automatische Formatierung für Schweizer Nummern
-- Unterstützung für Mobile und Festnetz
-
-### Adressen
-- Standard-Land: Schweiz
-- Schweizer PLZ-Format (4-stellig)
-- Typische Schweizer Städte in Beispieldaten
-
-### Beispiel-Kontakte
-Die Datenbank enthält Beispielkontakte von Schweizer Unternehmen aus verschiedenen Regionen:
-- Zürich (SwissTech AG)
-- Bern (Alpen Marketing GmbH) 
-- Lausanne (Romandie Tech SA)
-- Basel (Basel Design Studio)
-- Lugano (Ticino Business Sagl)
-
-## Verwendung
-
-### Für Benutzer
-
-1. **Kontakte anzeigen**: Öffnen Sie `index.php` in Ihrem Browser
-2. **Suchen**: Verwenden Sie das Suchfeld, um Kontakte zu finden
-3. **Details anzeigen**: Klicken Sie auf "Details" bei einem Kontakt
-4. **Einzeldownload**: Klicken Sie auf "vCard" bei einem Kontakt
-5. **Mehrfachdownload**: 
-   - Wählen Sie gewünschte Kontakte mit den Checkboxen aus
-   - Klicken Sie auf "Ausgewählte herunterladen"
-
-### Für Administratoren
-
-1. **Anmeldung**: Gehen Sie zu `admin.php` oder klicken Sie auf "Administration"
-2. **Kontakt hinzufügen**: Füllen Sie das Formular aus und klicken Sie "Hinzufügen"
-3. **Kontakt bearbeiten**: Klicken Sie auf das Bearbeiten-Symbol in der Tabelle
-4. **Kontakt löschen**: Klicken Sie auf das Löschen-Symbol und bestätigen Sie
-5. **Visitenkarte erstellen**: 
-   - Klicken Sie auf "Vorschau" um die Visitenkarte anzuzeigen
-   - Klicken Sie auf "PDF" um die Visitenkarte herunterzuladen
-
-## PDF-Visitenkarten Feature 🎴
-
-### Funktionen
-- **Doppelseitige Visitenkarten** - Vorderseite mit Kontaktdaten, Rückseite mit QR-Code
-- **QR-Code Integration** - Automatische vCard-Generierung für einfaches Scannen
-- **Corporate Design** - Professionelles Branding mit Firmenlogo und Farbschema
-- **Print-Ready Format** - Optimiert für Standard-Visitenkarten (85mm x 54mm)
-- **Foto-Integration** - Kontaktfotos werden automatisch eingebunden
-- **Responsive Preview** - Vorschau-Funktion vor dem Download
-
-### Design-Merkmale
-- **Vorderseite**: Blauer Farbverlauf mit Kontaktfoto, Name, Position und Kontaktdaten
-- **Rückseite**: Weißer Hintergrund mit Firmenlogo, QR-Code und Service-Informationen
-- **Typografie**: Optimierte Schriftgrößen für professionelle Lesbarkeit
-- **Print-Sicherheit**: Ausreichende Ränder für Schnitt-Toleranzen
-
-### Verwendung
-1. **Admin-Bereich**: Visitenkarten-Buttons bei jedem Kontakt
-2. **Vorschau**: Klicken Sie "Vorschau" für Browser-Anzeige
-3. **Download**: Klicken Sie "PDF" für HTML-Download (konvertierbar zu PDF)
-4. **Hauptseite**: PDF-Download-Button auch in der Kontaktliste verfügbar
-
-### Anpassung
-Die Visitenkarten können in `api/generate_business_card.php` angepasst werden:
-- Farben und Branding
-- Logo und Firmendaten
-- Layout und Abstände
-- Service-Beschreibungen
-
-## vCard-Format für Schweizer Kontakte
-
-Die heruntergeladenen Kontakte sind im standardisierten vCard 3.0 Format und enthalten:
-
-- Name (Vor- und Nachname)
-- Schweizer Telefonnummer (+41 Format)
-- E-Mail-Adresse (.ch Domains)
-- Position/Titel
-- Schweizer Firma/Organisation
-- Schweizer Adresse (PLZ, Ort, Schweiz)
-- Website (.ch Domains)
-- Notizen
-
-## Smartphone-Integration
-
-Die vCard-Dateien können direkt in die Kontakte-App des Smartphones importiert werden:
-
-- **iPhone**: Öffnen Sie die .vcf-Datei und tippen Sie auf "Kontakt hinzufügen"
-- **Android**: Öffnen Sie die .vcf-Datei mit der Kontakte-App
-
-## Fehlerbehebung
-
-### Login-Probleme
-
-Wenn das Admin-Login nicht funktioniert:
-
-1. **Debug-Tool verwenden**: Öffnen Sie `debug_login.php`
-2. **Passwort-Hash prüfen**: Verwenden Sie `generate_password_hash.php`
-3. **Datenbank aktualisieren**: Führen Sie den generierten SQL-Befehl aus
+## 🔧 Fehlerbehebung
 
 ### Häufige Probleme
 
-1. **"Connection failed"**: Überprüfen Sie die Datenbankverbindung in `config.php`
-2. **"File not found"**: Stellen Sie sicher, dass alle Dateien hochgeladen wurden
-3. **vCard-Download funktioniert nicht**: Überprüfen Sie die PHP-Berechtigung für Header-Ausgabe
-4. **Schweizer Telefonnummern falsch formatiert**: Prüfen Sie das JavaScript in `admin.js`
+#### 1. Datenbank-Verbindungsfehler
+```
+Lösung: Prüfe Credentials in allen PHP-Dateien
+Bereits gefixt: Alle Dateien verwenden kontaktverwaltung/Kontakt&Verwaltung
+```
 
-## Datenschutz & DSGVO
+#### 2. PayPal Webhook funktioniert nicht
+```
+- Prüfe Webhook-URL in PayPal Dashboard
+- Stelle sicher, dass SSL aktiviert ist
+- Kontrolliere Error-Logs für Details
+```
 
-- **Datenminimierung**: Nur notwendige Kontaktdaten werden gespeichert
-- **Löschfunktion**: Kontakte können vollständig gelöscht werden
-- **Sichere Speicherung**: Passwörter werden gehasht gespeichert
-- **Export-Funktion**: Benutzer können ihre Daten jederzeit exportieren
+#### 3. Private Profile URLs funktionieren nicht
+```
+- Prüfe mod_rewrite Konfiguration
+- Stelle sicher, dass .htaccess gelesen wird
+- Führe setup_private_profiles.sql aus
+```
 
-## Version
+#### 4. Terms/Privacy Links broken
+```
+Bereits gefixt: Links zeigen auf /terms und /privacy
+```
 
-Version 1.2 - Schweiz-Edition mit PDF-Visitenkarten und verbessertem Login
+## 📁 Dateistruktur
 
-## Lizenz
+```
+ams/
+├── config/
+│   └── paypal.php              # PayPal-Konfiguration
+├── api/
+│   ├── register.php            # Registrierung + Private Profiles
+│   ├── login.php               # Authentifizierung
+│   ├── paypal_webhook.php      # PayPal Webhook Handler
+│   └── subscription_success.php # Subscription Bestätigung
+├── views/
+│   ├── private_profile.php     # Private Profil-Ansicht
+│   ├── contact_profile.php     # Unternehmens-Kontakt
+│   └── 404.php                 # Fehlerseite
+├── router.php                  # Multi-Tenant URL-Routing
+├── index.php                   # Homepage
+├── login.php                   # Login-Seite
+├── register.php                # Registrierung
+├── setup_paypal_db.php         # PayPal Setup-Script
+└── setup_private_profiles.sql  # Private Profile Schema
+```
 
-MIT License
+## 🔐 Sicherheitshinweise
 
-Copyright (c) 2025 Andy Bui
+### Produktions-Checklist
+- [ ] SSL-Zertifikat installiert
+- [ ] PayPal Webhook-Signatur-Verifizierung aktiviert
+- [ ] Error-Logs aus Webhook-Handler entfernt
+- [ ] Datenbank-Backups konfiguriert
+- [ ] Rate-Limiting für API-Endpunkte
+- [ ] Security Headers konfiguriert
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+### Private Profile Sicherheit
+- URLs sind nur über direkten Link zugänglich
+- Keine öffentliche Auflistung von Private Profiles
+- Sichere Slug-Generierung verhindert Raten
+- Analytics-Tracking für Sicherheitsmonitoring
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+## 🆘 Support
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+### PayPal-Integration
+- **Dokumentation**: https://developer.paypal.com/docs/subscriptions/
+- **Sandbox-Testing**: https://developer.paypal.com/developer/accounts/
+- **Webhook-Guide**: https://developer.paypal.com/docs/api/webhooks/
 
-## Autor
+### Entwicklung
+- **Repository**: https://github.com/AndyNope/contacts-manager
+- **Branch**: commercial
+- **Issues**: GitHub Issues für Bug-Reports
 
-**Andy Bui** - *Initial work and development*
+---
 
-## Beitrag leisten
+## ✅ Status
 
-1. Forken Sie das Repository
-2. Erstellen Sie einen Feature-Branch (`git checkout -b feature/AmazingFeature`)
-3. Committen Sie Ihre Änderungen (`git commit -m 'Add some AmazingFeature'`)
-4. Pushen Sie den Branch (`git push origin feature/AmazingFeature`)
-5. Öffnen Sie einen Pull Request
+### Completed ✅
+- [x] PayPal-Integration mit echten Credentials
+- [x] Private Profile System implementiert
+- [x] Datenbank-Credentials gefixt
+- [x] Terms/Privacy Links gefixt
+- [x] Free Plan wiederhergestellt
+- [x] Multi-Tenant Routing System
+- [x] Webhook Handler erstellt
 
-# contacts-manager
+### In Progress 🔄
+- [ ] Webhook-ID in PayPal Dashboard erstellen
+- [ ] SSL-Zertifikat für Webhook-Testing
+- [ ] Produktions-Deployment
+
+### Planned 📋
+- [ ] Company-Branding für Premium Plans
+- [ ] Advanced Analytics Dashboard
+- [ ] Email-Benachrichtigungen
+- [ ] API-Rate-Limiting
+
+**Last Updated**: 30. Juli 2025
+**Version**: 2.0.0 (Commercial with Private Profiles)
