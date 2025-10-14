@@ -1,10 +1,20 @@
+<?php
+// Include helper functions
+if (file_exists('../includes/private_profile_helpers.php')) {
+    include_once '../includes/private_profile_helpers.php';
+}
+
+$contactName = getContactDisplayName($contact);
+$profileUrl = generatePrivateProfileUrl($contact);
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= htmlspecialchars($contact['first_name'] . ' ' . $contact['last_name']) ?> - Private Profile</title>
-    <meta name="description" content="Private professional profile for <?= htmlspecialchars($contact['first_name'] . ' ' . $contact['last_name']) ?>">
+    <title><?= htmlspecialchars($contactName) ?> - Private Profile</title>
+    <meta name="description" content="Private professional profile for <?= htmlspecialchars($contactName) ?>">
+    <link rel="canonical" href="https://<?= $_SERVER['HTTP_HOST'] ?><?= $profileUrl ?>">
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>

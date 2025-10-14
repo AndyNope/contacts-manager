@@ -28,33 +28,51 @@ if ($_POST) {
         $error = 'Please fill in all fields.';
     } else {
         try {
-            // Find user by email
-            $stmt = $db->prepare("
-                SELECT u.*, c.slug as company_slug, c.name as company_name, c.subscription_tier
-                FROM users u 
-                JOIN companies c ON u.company_id = c.id 
-                WHERE u.email = ? AND c.subscription_status = 'active'
-            ");
+            // Find user by email - first check if user exists
+            $stmt = $db->prepare("SELECT * FROM users WHERE email = ?");
             $stmt->execute([$email]);
             $user = $stmt->fetch();
             
-            if ($user && password_verify($password, $user['password_hash'])) {
-                // Update last login
-                $updateStmt = $db->prepare("UPDATE users SET last_login_at = NOW() WHERE id = ?");
-                $updateStmt->execute([$user['id']]);
-                
-                // Set session
-                $_SESSION['user_id'] = $user['id'];
-                $_SESSION['company_id'] = $user['company_id'];
-                $_SESSION['company_slug'] = $user['company_slug'];
-                $_SESSION['user_role'] = $user['role'];
-                $_SESSION['user_name'] = $user['first_name'] . ' ' . $user['last_name'];
-                
-                // Redirect to company dashboard
-                header('Location: /' . $user['company_slug']);
-                exit;
+            if (!$user) {
+                $error = 'No account found with this email address.';
             } else {
-                $error = 'Invalid email or password.';
+                // Get company information
+                $stmt = $db->prepare("
+                    SELECT u.*, c.slug as company_slug, c.name as company_name, c.subscription_tier, c.subscription_status
+                    FROM users u 
+                    LEFT JOIN companies c ON u.company_id = c.id 
+                    WHERE u.id = ?
+                ");
+                $stmt->execute([$user['id']]);
+                $userWithCompany = $stmt->fetch();
+                
+                // Check password - use 'password' field which contains the correct hash
+                $passwordHash = $user['password'];
+                
+                if (password_verify($password, $passwordHash)) {
+                    // Check subscription status (allow if no company or if active)
+                    if (!$userWithCompany['company_id'] || $userWithCompany['subscription_status'] === 'active') {
+                        // Update last login
+                        $updateStmt = $db->prepare("UPDATE users SET last_login_at = NOW() WHERE id = ?");
+                        $updateStmt->execute([$user['id']]);
+                        
+                        // Set session
+                        $_SESSION['user_id'] = $user['id'];
+                        $_SESSION['company_id'] = $userWithCompany['company_id'];
+                        $_SESSION['company_slug'] = $userWithCompany['company_slug'] ?: 'private';
+                        $_SESSION['user_role'] = $user['role'] ?: 'user';
+                        $_SESSION['user_name'] = $user['first_name'] . ' ' . $user['last_name'];
+                        
+                        // Redirect to appropriate dashboard
+                        $redirectUrl = $userWithCompany['company_slug'] ? '/' . $userWithCompany['company_slug'] : '/dashboard';
+                        header('Location: ' . $redirectUrl);
+                        exit;
+                    } else {
+                        $error = 'Your account subscription is not active. Please contact support.';
+                    }
+                } else {
+                    $error = 'Invalid email or password.';
+                }
             }
         } catch (PDOException $e) {
             $error = 'Login failed. Please try again.';
@@ -180,7 +198,7 @@ if ($_POST) {
                         </div>
                     <?php endif; ?>
 
-                    <form method="POST">
+                    <form id="loginForm" method="POST">
                         <div class="mb-3">
                             <label for="email" class="form-label">Email Address</label>
                             <input type="email" class="form-control" id="email" name="email" 
@@ -193,16 +211,19 @@ if ($_POST) {
                         </div>
 
                         <div class="mb-3 form-check">
-                            <input type="checkbox" class="form-check-input" id="remember">
+                            <input type="checkbox" class="form-check-input" id="remember" name="remember_me">
                             <label class="form-check-label" for="remember">
                                 Remember me
                             </label>
                         </div>
 
-                        <button type="submit" class="btn btn-primary w-100 mb-3">
+                        <button type="submit" class="btn btn-primary w-100 mb-3" id="loginBtn">
                             <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
                         </button>
                     </form>
+
+                    <!-- Loading and error displays -->
+                    <div id="loginStatus" class="mt-3" style="display: none;"></div>
 
                     <div class="divider">
                         <span>or</span>
@@ -224,5 +245,74 @@ if ($_POST) {
             </div>
         </div>
     </div>
+
+    <script>
+    document.getElementById('loginForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const submitBtn = document.getElementById('loginBtn');
+        const statusDiv = document.getElementById('loginStatus');
+        const form = this;
+        
+        // Show loading state
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Signing In...';
+        statusDiv.style.display = 'none';
+        
+        try {
+            // Prepare form data
+            const formData = new FormData(form);
+            
+            // Send AJAX request to login API
+            const response = await fetch('/api/login_simple.php', {
+                method: 'POST',
+                body: formData,
+                credentials: 'same-origin'
+            });
+            
+            const result = await response.json();
+            
+            if (response.ok && result.success) {
+                // Success - redirect
+                statusDiv.innerHTML = `
+                    <div class="alert alert-success">
+                        <i class="bi bi-check-circle me-2"></i>Login successful! Redirecting...
+                    </div>
+                `;
+                statusDiv.style.display = 'block';
+                
+                // Redirect after short delay
+                setTimeout(() => {
+                    window.location.href = result.redirect_url || '/dashboard';
+                }, 1000);
+                
+            } else {
+                // Error
+                throw new Error(result.message || 'Login failed');
+            }
+            
+        } catch (error) {
+            // Show error
+            statusDiv.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-triangle me-2"></i>${error.message}
+                </div>
+            `;
+            statusDiv.style.display = 'block';
+            
+        } finally {
+            // Reset button
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="bi bi-box-arrow-in-right me-2"></i>Sign In';
+        }
+    });
+    
+    // Enter key support
+    document.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter' && (e.target.id === 'email' || e.target.id === 'password')) {
+            document.getElementById('loginForm').dispatchEvent(new Event('submit'));
+        }
+    });
+    </script>
 </body>
 </html>

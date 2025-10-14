@@ -25,8 +25,8 @@ RewriteRule ^admin\.php$ admin.php [L]
 RewriteCond %{REQUEST_URI} \.(css|js|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot|pdf)$ [NC]
 RewriteRule ^ - [L]
 
-# API routes (for backward compatibility)
-RewriteRule ^api/(.*)$ api/$1 [L]
+# API routes - let router handle these
+RewriteRule ^api/(.*)$ router.php [QSA,L]
 
 # Route everything else through the router
 RewriteRule ^(.*)$ router.php [QSA,L]

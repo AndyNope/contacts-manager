@@ -95,19 +95,25 @@ class Router {
             return;
         }
         
-        // Private profile routes: /private/profile/:username
-        if (count($this->segments) === 3 && $this->segments[0] === 'private' && $this->segments[1] === 'profile') {
-            $userSlug = $this->segments[2];
-            $this->showPrivateProfile($userSlug);
+        // Private profile routes: /private/{contact-id} or /private/{slug}
+        if ($this->segments[0] === 'private' && isset($this->segments[1])) {
+            $identifier = $this->segments[1];
+            
+            // Support both numeric IDs and slugs
+            if (is_numeric($identifier)) {
+                $this->showPrivateProfileById($identifier);
+            } else {
+                $this->showPrivateProfileBySlug($identifier);
+            }
             return;
         }
         
-        // Private profile routes: /private/profile/:username
-        if ($this->segments[0] === 'private' && 
-            isset($this->segments[1]) && $this->segments[1] === 'profile' &&
-            isset($this->segments[2])) {
-            $this->showPrivateProfile($this->segments[2]);
-            return;
+        // Legacy support: /private/profile/:username (redirect to new format)
+        if (count($this->segments) === 3 && $this->segments[0] === 'private' && $this->segments[1] === 'profile') {
+            $userSlug = $this->segments[2];
+            // Redirect to new format
+            header('Location: /private/' . $userSlug, true, 301);
+            exit;
         }
         
         // Company routes: /:company or /:company/profile/:contact
@@ -178,6 +184,31 @@ class Router {
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
     
+    private function getPrivateProfileById($contactId) {
+        // Get private company
+        $stmt = $this->db->prepare("SELECT id FROM companies WHERE slug = 'private'");
+        $stmt->execute();
+        $privateCompany = $stmt->fetch();
+        
+        if (!$privateCompany) {
+            return null;
+        }
+        
+        // Get contact by ID in private company
+        $stmt = $this->db->prepare("
+            SELECT c.*, u.first_name as creator_first_name, u.last_name as creator_last_name 
+            FROM contacts c 
+            LEFT JOIN users u ON c.created_by = u.id 
+            WHERE c.company_id = ? AND c.id = ? AND c.is_public = TRUE
+        ");
+        $stmt->execute([$privateCompany['id'], $contactId]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+    
+    private function getPrivateProfileBySlug($userSlug) {
+        return $this->getPrivateProfile($userSlug);
+    }
+    
     private function showHomepage() {
         // For direct access, use the index.php content
         // Since we moved the homepage content to index.php, we can just return
@@ -206,6 +237,12 @@ class Router {
     }
     
     private function showCompanyContacts($company) {
+        // Check access permissions
+        if (!$this->canAccessCompany($company)) {
+            $this->showAccessDenied($company);
+            return;
+        }
+        
         // Get company contacts
         $stmt = $this->db->prepare("
             SELECT * FROM contacts 
@@ -220,6 +257,12 @@ class Router {
     }
     
     private function showContactProfile($company, $contactSlug) {
+        // Check access permissions
+        if (!$this->canAccessCompany($company)) {
+            $this->showAccessDenied($company);
+            return;
+        }
+        
         $contact = $this->getContactBySlug($company['id'], $contactSlug);
         
         if (!$contact) {
@@ -227,12 +270,22 @@ class Router {
             return;
         }
         
+        // Additional contact-level permission check
+        if (!$this->canViewContact($contact)) {
+            $this->showAccessDenied($company, 'This contact is not publicly accessible.');
+            return;
+        }
+        
         // Track profile view
         $this->trackAnalytics($company['id'], $contact['id'], 'profile_view');
         
         // Update profile view count
-        $stmt = $this->db->prepare("UPDATE contacts SET profile_views = profile_views + 1, last_viewed_at = NOW() WHERE id = ?");
-        $stmt->execute([$contact['id']]);
+        try {
+            $stmt = $this->db->prepare("UPDATE contacts SET profile_views = profile_views + 1, last_viewed_at = NOW() WHERE id = ?");
+            $stmt->execute([$contact['id']]);
+        } catch (Exception $e) {
+            error_log('Profile view tracking error: ' . $e->getMessage());
+        }
         
         // Include contact profile view
         include 'views/contact_profile.php';
@@ -246,6 +299,32 @@ class Router {
             return;
         }
         
+        $this->renderPrivateProfile($contact);
+    }
+    
+    private function showPrivateProfileById($contactId) {
+        $contact = $this->getPrivateProfileById($contactId);
+        
+        if (!$contact) {
+            $this->show404();
+            return;
+        }
+        
+        $this->renderPrivateProfile($contact);
+    }
+    
+    private function showPrivateProfileBySlug($userSlug) {
+        $contact = $this->getPrivateProfileBySlug($userSlug);
+        
+        if (!$contact) {
+            $this->show404();
+            return;
+        }
+        
+        $this->renderPrivateProfile($contact);
+    }
+    
+    private function renderPrivateProfile($contact) {
         // For private profiles, set a minimal company context
         $_SESSION['current_company'] = [
             'id' => 'private',
@@ -256,9 +335,14 @@ class Router {
         // Track profile view
         $this->trackAnalytics('private', $contact['id'], 'profile_view');
         
-        // Update profile view count
-        $stmt = $this->db->prepare("UPDATE contacts SET profile_views = profile_views + 1, last_viewed_at = NOW() WHERE id = ?");
-        $stmt->execute([$contact['id']]);
+        // Update profile view count (safely)
+        try {
+            $stmt = $this->db->prepare("UPDATE contacts SET profile_views = profile_views + 1, last_viewed_at = NOW() WHERE id = ?");
+            $stmt->execute([$contact['id']]);
+        } catch (Exception $e) {
+            // Handle cases where these columns might not exist
+            error_log('Profile view tracking error: ' . $e->getMessage());
+        }
         
         // Include private profile view
         include 'views/private_profile.php';
@@ -323,6 +407,73 @@ class Router {
     private function show404() {
         http_response_code(404);
         include 'views/404.php';
+    }
+    
+    /**
+     * Check if current user can access a company
+     */
+    private function canAccessCompany($company) {
+        // Allow access to private profiles company
+        if ($company['slug'] === 'private') {
+            return true;
+        }
+        
+        // Check if user is logged in
+        if (!isset($_SESSION['user_id'])) {
+            return false;
+        }
+        
+        // Check if user belongs to this company
+        if (isset($_SESSION['company_id']) && $_SESSION['company_id'] == $company['id']) {
+            return true;
+        }
+        
+        // Check if company allows public access (new feature)
+        if (isset($company['allow_public_access']) && $company['allow_public_access']) {
+            return true;
+        }
+        
+        // Default: deny access
+        return false;
+    }
+    
+    /**
+     * Check if current user can view a specific contact
+     */
+    private function canViewContact($contact) {
+        // Public contacts are viewable
+        if (isset($contact['is_public']) && $contact['is_public']) {
+            return true;
+        }
+        
+        // If user is not logged in, only public contacts
+        if (!isset($_SESSION['user_id'])) {
+            return false;
+        }
+        
+        // Users can view contacts from their own company
+        if (isset($_SESSION['company_id']) && $_SESSION['company_id'] == $contact['company_id']) {
+            return true;
+        }
+        
+        // Users can view their own contacts
+        if (isset($contact['created_by']) && $_SESSION['user_id'] == $contact['created_by']) {
+            return true;
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Show access denied page
+     */
+    private function showAccessDenied($company = null, $message = null) {
+        http_response_code(403);
+        
+        $defaultMessage = $message ?: 'You do not have permission to access this company\'s contacts.';
+        $companyName = $company ? $company['name'] : 'this resource';
+        
+        include 'views/access_denied.php';
     }
 }
 

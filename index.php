@@ -1,3 +1,20 @@
+<?php
+session_start();
+
+// Check if user is logged in
+$isLoggedIn = isset($_SESSION['user_id']);
+$currentUser = null;
+
+if ($isLoggedIn) {
+    $currentUser = [
+        'id' => $_SESSION['user_id'],
+        'name' => $_SESSION['user_name'] ?? 'Unknown User',
+        'email' => $_SESSION['user_email'] ?? '',
+        'company' => $_SESSION['company_name'] ?? '',
+        'role' => $_SESSION['user_role'] ?? 'user'
+    ];
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -44,6 +61,20 @@
             background-color: var(--bg-color);
             color: var(--text-color);
             transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        /* User Avatar */
+        .avatar-circle {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--accent-color);
+            color: var(--dark-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
         }
 
         /* Dark Mode Toggle */
@@ -241,15 +272,66 @@
             
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="#features">Features</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#pricing">Pricing</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#contact">Contact</a>
-                    </li>
+                    <?php if (!$isLoggedIn): ?>
+                        <!-- Guest Navigation -->
+                        <li class="nav-item">
+                            <a class="nav-link" href="#features">Features</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#pricing">Pricing</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#contact">Contact</a>
+                        </li>
+                        <li class="nav-item ms-3">
+                            <a class="btn btn-outline-light" href="/login">
+                                <i class="bi bi-box-arrow-in-right me-1"></i>Sign In
+                            </a>
+                        </li>
+                        <li class="nav-item ms-2">
+                            <a class="btn btn-warning" href="/register">
+                                <i class="bi bi-person-plus me-1"></i>Sign Up
+                            </a>
+                        </li>
+                    <?php else: ?>
+                        <!-- Authenticated Navigation -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                                <div class="me-2">
+                                    <div class="d-flex align-items-center">
+                                        <div class="avatar-circle me-2">
+                                            <?= strtoupper(substr($currentUser['name'], 0, 1)) ?>
+                                        </div>
+                                        <div class="d-none d-lg-block">
+                                            <div class="fw-semibold"><?= htmlspecialchars($currentUser['name']) ?></div>
+                                            <div class="small text-light opacity-75"><?= htmlspecialchars($currentUser['company'] ?: 'Private Profile') ?></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><h6 class="dropdown-header">
+                                    <?= htmlspecialchars($currentUser['name']) ?><br>
+                                    <small class="text-muted"><?= htmlspecialchars($currentUser['email']) ?></small>
+                                </h6></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="<?= $_SESSION['company_slug'] ? '/' . $_SESSION['company_slug'] : '#' ?>">
+                                    <i class="bi bi-speedometer2 me-2"></i>Dashboard
+                                </a></li>
+                                <li><a class="dropdown-item" href="/profile">
+                                    <i class="bi bi-person-circle me-2"></i>My Profile
+                                </a></li>
+                                <li><a class="dropdown-item" href="/settings">
+                                    <i class="bi bi-gear me-2"></i>Settings
+                                </a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item text-danger" href="/api/logout.php">
+                                    <i class="bi bi-box-arrow-right me-2"></i>Sign Out
+                                </a></li>
+                            </ul>
+                        </li>
+                    <?php endif; ?>
+                    
                     <li class="nav-item ms-3">
                         <button class="btn theme-toggle" onclick="toggleTheme()" id="themeToggle">
                             <i class="bi bi-moon-fill" id="themeIcon"></i>

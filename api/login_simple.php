@@ -4,6 +4,10 @@ session_start();
 // Set JSON response header early
 header('Content-Type: application/json');
 
+// Enable error reporting for debugging
+error_reporting(E_ALL);
+ini_set('display_errors', 0); // Don't display errors in JSON response
+
 // Database connection
 try {
     $host = 'localhost';
@@ -18,12 +22,14 @@ try {
     ]);
 } catch (PDOException $e) {
     http_response_code(500);
-    die(json_encode(['error' => 'Database connection failed']));
+    echo json_encode(['success' => false, 'message' => 'Database connection failed']);
+    exit;
 }
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
-    die(json_encode(['error' => 'Method not allowed']));
+    echo json_encode(['success' => false, 'message' => 'Method not allowed']);
+    exit;
 }
 
 // Get form data
@@ -39,13 +45,8 @@ if (empty($email) || empty($password)) {
 }
 
 try {
-    // Find user by email
-    $stmt = $pdo->prepare("
-        SELECT u.*, c.slug as company_slug, c.name as company_name, c.subscription_plan, c.subscription_status 
-        FROM users u 
-        JOIN companies c ON u.company_id = c.id 
-        WHERE u.email = ?
-    ");
+    // First, find user by email
+    $stmt = $pdo->prepare("SELECT * FROM users WHERE email = ?");
     $stmt->execute([$email]);
     $user = $stmt->fetch();
     
@@ -62,8 +63,16 @@ try {
         exit;
     }
     
-    // Check if account is active
-    if ($user['subscription_status'] === 'cancelled' || $user['subscription_status'] === 'suspended') {
+    // Get company information if exists
+    $company = null;
+    if ($user['company_id']) {
+        $stmt = $pdo->prepare("SELECT * FROM companies WHERE id = ?");
+        $stmt->execute([$user['company_id']]);
+        $company = $stmt->fetch();
+    }
+    
+    // Check subscription status if company exists
+    if ($company && in_array($company['subscription_status'], ['cancelled', 'suspended'])) {
         http_response_code(403);
         echo json_encode(['success' => false, 'message' => 'Your account subscription is not active. Please contact support.']);
         exit;
@@ -72,57 +81,47 @@ try {
     // Set session variables
     $_SESSION['user_id'] = $user['id'];
     $_SESSION['company_id'] = $user['company_id'];
-    $_SESSION['company_slug'] = $user['company_slug'];
-    $_SESSION['company_name'] = $user['company_name'];
     $_SESSION['user_name'] = $user['first_name'] . ' ' . $user['last_name'];
     $_SESSION['user_email'] = $user['email'];
     $_SESSION['user_role'] = $user['role'];
-    $_SESSION['subscription_plan'] = $user['subscription_plan'];
-    $_SESSION['subscription_status'] = $user['subscription_status'];
     
-    // Set remember me cookie if requested
-    if ($rememberMe) {
-        $token = bin2hex(random_bytes(32));
-        setcookie('remember_token', $token, time() + (30 * 24 * 60 * 60), '/', '', true, true); // 30 days
-        
-        // Store token in database (check if column exists first)
-        try {
-            $stmt = $pdo->prepare("UPDATE users SET remember_token = ? WHERE id = ?");
-            $stmt->execute([$token, $user['id']]);
-        } catch (Exception $e) {
-            // Ignore if remember_token column doesn't exist
-            error_log('Remember token update failed: ' . $e->getMessage());
-        }
+    if ($company) {
+        $_SESSION['company_slug'] = $company['slug'];
+        $_SESSION['company_name'] = $company['name'];
+        $_SESSION['subscription_plan'] = $company['subscription_tier'] ?? $company['subscription_plan'] ?? 'basic';
+        $_SESSION['subscription_status'] = $company['subscription_status'];
     }
     
-    // Update last login (check if column exists first)
-    try {
-        $stmt = $pdo->prepare("UPDATE users SET last_login_at = NOW() WHERE id = ?");
-        $stmt->execute([$user['id']]);
-    } catch (Exception $e) {
-        // Ignore if last_login_at column doesn't exist
-        error_log('Last login update failed: ' . $e->getMessage());
+    // Determine redirect URL
+    $redirectUrl = '/dashboard'; // default
+    if ($company && $company['slug']) {
+        $redirectUrl = '/' . $company['slug'];
+    } elseif ($user['is_private_profile']) {
+        // Use new private profile URL format - prefer ID over slug
+        if (!empty($user['id'])) {
+            $redirectUrl = '/private/' . $user['id'];
+        } else {
+            $redirectUrl = '/private/' . $user['profile_slug'];
+        }
     }
     
     // Return success response
     echo json_encode([
         'success' => true,
         'message' => 'Login successful!',
-        'redirect_url' => '/' . $user['company_slug'],
+        'redirect_url' => $redirectUrl,
         'user' => [
             'id' => $user['id'],
             'name' => $user['first_name'] . ' ' . $user['last_name'],
             'email' => $user['email'],
             'role' => $user['role'],
-            'company' => $user['company_name']
+            'company' => $company ? $company['name'] : null
         ]
     ]);
-    exit;
     
 } catch (Exception $e) {
-    error_log('Login error: ' . $e->getMessage());
+    error_log('Login API error: ' . $e->getMessage());
     http_response_code(500);
     echo json_encode(['success' => false, 'message' => 'Login failed. Please try again.']);
-    exit;
 }
 ?>
