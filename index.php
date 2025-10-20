@@ -72,35 +72,66 @@ if ($isLoggedIn) {
             width: 32px;
             height: 32px;
             border-radius: 50%;
-            background: var(--accent-color);
-            color: var(--dark-color);
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: bold;
+            font-weight: 600;
             font-size: 14px;
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
         }
 
         .avatar-large {
             width: 80px;
             height: 80px;
             border-radius: 50%;
-            background: var(--accent-color);
-            color: var(--dark-color);
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: bold;
+            font-weight: 600;
             font-size: 2rem;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            box-shadow: 0 8px 24px rgba(59, 130, 246, 0.3);
         }
 
         .welcome-back-card {
             background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
+            backdrop-filter: blur(20px);
             border-radius: 20px;
             padding: 40px;
             border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Enhanced badge styling */
+        .badge {
+            font-weight: 500;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 0.75rem;
+        }
+        
+        /* Dropdown enhancements */
+        .dropdown-menu {
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(20px);
+        }
+        
+        .dropdown-item {
+            padding: 12px 20px;
+            border-radius: 8px;
+            margin: 2px 8px;
+            font-weight: 500;
+        }
+        
+        .dropdown-header {
+            font-weight: 600;
+            color: var(--primary-color);
+            padding: 12px 20px 8px;
         }
 
         /* Dark Mode Toggle */
@@ -123,35 +154,56 @@ if ($isLoggedIn) {
         .hero {
             background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
             color: white;
-            padding: 100px 0;
+            padding: 80px 0;
             text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+            pointer-events: none;
         }
 
         .hero h1 {
-            font-size: 3.5rem;
-            font-weight: 700;
+            font-size: 3.2rem;
+            font-weight: 600;
             margin-bottom: 1.5rem;
+            letter-spacing: -0.02em;
         }
 
         .hero p {
-            font-size: 1.25rem;
-            opacity: 0.9;
+            font-size: 1.2rem;
+            opacity: 0.95;
             margin-bottom: 2rem;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            line-height: 1.6;
         }
 
         .cta-button {
             background: var(--accent-color);
             border: none;
-            padding: 15px 40px;
-            font-size: 1.1rem;
+            padding: 16px 32px;
+            font-size: 1rem;
             font-weight: 600;
-            border-radius: 50px;
-            transition: transform 0.3s ease;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            color: var(--dark-color);
+            box-shadow: 0 4px 20px rgba(245, 158, 11, 0.3);
         }
 
         .cta-button:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(245, 158, 11, 0.3);
+            box-shadow: 0 8px 30px rgba(245, 158, 11, 0.4);
+            color: var(--dark-color);
         }
 
         /* Features Section */
@@ -162,43 +214,46 @@ if ($isLoggedIn) {
 
         .feature-card {
             background: var(--card-bg);
-            border-radius: 20px;
-            padding: 40px 30px;
+            border-radius: 16px;
+            padding: 32px 24px;
             text-align: center;
             border: 1px solid var(--border-color);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            transition: all 0.3s ease;
             height: 100%;
             color: var(--text-color);
         }
 
         .feature-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 40px var(--shadow);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 32px var(--shadow);
+            border-color: rgba(59, 130, 246, 0.3);
         }
 
         .feature-card h4 {
             color: var(--primary-color) !important;
-            margin-bottom: 15px;
+            margin-bottom: 16px;
             font-weight: 600;
+            font-size: 1.25rem;
         }
 
         .feature-card p {
             color: var(--text-muted) !important;
             line-height: 1.6;
+            font-size: 0.95rem;
         }
 
         .feature-icon {
             background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
             color: white;
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
+            width: 64px;
+            height: 64px;
+            border-radius: 16px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 2rem;
+            font-size: 1.5rem;
             margin: 0 auto 20px;
-            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
+            box-shadow: 0 8px 24px rgba(59, 130, 246, 0.3);
         }
 
         /* Pricing Section */
@@ -283,109 +338,183 @@ if ($isLoggedIn) {
         @media (max-width: 768px) {
             /* Hero section mobile improvements */
             .hero {
-                padding: 60px 0;
+                padding: 50px 0;
+                background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
             }
             
             .hero h1 {
-                font-size: 2.2rem;
-                line-height: 1.3;
+                font-size: 2rem;
+                line-height: 1.2;
+                font-weight: 600;
+                margin-bottom: 12px;
             }
             
             .hero .lead {
-                font-size: 1.1rem;
+                font-size: 1rem;
+                opacity: 0.95;
+                margin-bottom: 25px;
             }
             
-            /* Welcome back card mobile layout */
+            /* Welcome back card - HiHello inspired clean design */
             .welcome-back-card {
-                padding: 30px 20px;
-                margin: 0 15px;
+                background: rgba(255, 255, 255, 0.95);
+                backdrop-filter: blur(20px);
+                border-radius: 16px;
+                padding: 32px 24px;
+                margin: 0 20px;
+                border: 1px solid rgba(255, 255, 255, 0.3);
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
             }
             
             /* Mobile-friendly avatar and text layout */
             .welcome-back-card .d-flex {
                 flex-direction: column !important;
                 text-align: center !important;
+                margin-bottom: 24px !important;
             }
             
             .welcome-back-card .text-start {
                 text-align: center !important;
-                margin-top: 20px;
+                margin-top: 16px;
+            }
+            
+            .welcome-back-card h1 {
+                color: var(--primary-color) !important;
+                font-size: 1.5rem;
+                font-weight: 600;
+                margin-bottom: 8px !important;
+            }
+            
+            .welcome-back-card .lead {
+                color: var(--text-muted) !important;
+                font-size: 0.95rem;
+                margin-bottom: 8px !important;
             }
             
             .avatar-large {
-                width: 70px;
-                height: 70px;
-                font-size: 1.8rem;
-                margin: 0 auto 20px auto !important;
+                width: 64px;
+                height: 64px;
+                font-size: 1.5rem;
+                margin: 0 auto 16px auto !important;
+                background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+                box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);
             }
             
-            /* Mobile button improvements */
+            /* Mobile button improvements - HiHello style */
             .d-flex.gap-3.flex-wrap {
                 flex-direction: column !important;
-                gap: 15px !important;
+                gap: 12px !important;
                 align-items: center;
             }
             
             .btn {
                 width: 100%;
-                max-width: 280px;
-                padding: 12px 20px;
-                font-size: 1rem;
+                max-width: 320px;
+                padding: 14px 24px;
+                font-size: 0.95rem;
+                font-weight: 500;
+                border-radius: 12px;
+                transition: all 0.2s ease;
+            }
+            
+            .cta-button {
+                background: var(--accent-color);
+                color: var(--dark-color) !important;
+                border: none;
+                box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+            }
+            
+            .btn-outline-light {
+                background: rgba(255, 255, 255, 0.1);
+                border: 1px solid rgba(255, 255, 255, 0.3);
+                color: white;
             }
             
             /* Feature cards mobile spacing */
             .feature-card {
-                margin-bottom: 20px;
-                padding: 30px 20px;
+                margin-bottom: 16px;
+                padding: 28px 20px;
+                border-radius: 16px;
             }
             
             .feature-icon {
-                width: 60px;
-                height: 60px;
-                font-size: 1.5rem;
+                width: 56px;
+                height: 56px;
+                font-size: 1.4rem;
+                margin-bottom: 16px;
             }
             
             /* Pricing cards mobile */
             .pricing-card {
-                padding: 30px 20px;
-                margin-bottom: 20px;
+                padding: 28px 20px;
+                margin-bottom: 16px;
+                border-radius: 16px;
             }
             
-            /* Navigation mobile improvements */
+            /* Navigation mobile improvements - HiHello inspired */
+            .navbar {
+                padding: 12px 0;
+            }
+            
+            .navbar-toggler {
+                border: none;
+                padding: 8px;
+                border-radius: 8px;
+            }
+            
+            .navbar-toggler:focus {
+                box-shadow: none;
+            }
+            
             .theme-toggle {
-                padding: 8px 15px;
-                font-size: 0.9rem;
-                margin-top: 10px;
+                padding: 8px 16px;
+                font-size: 0.85rem;
+                margin-top: 8px;
+                border-radius: 8px;
             }
             
             .navbar-collapse {
-                text-align: right;
-                margin-top: 15px;
+                background: rgba(255, 255, 255, 0.95);
+                backdrop-filter: blur(20px);
+                border-radius: 12px;
+                padding: 16px;
+                margin-top: 12px;
+                border: 1px solid rgba(255, 255, 255, 0.3);
             }
             
             .navbar-nav {
-                align-items: flex-end;
+                align-items: stretch;
             }
             
             .nav-item {
-                text-align: right;
                 margin-bottom: 8px;
+            }
+            
+            .nav-link {
+                color: var(--primary-color) !important;
+                padding: 12px 16px !important;
+                border-radius: 8px;
+                font-weight: 500;
             }
             
             .dropdown-menu {
                 right: 0;
                 left: auto;
-                min-width: 250px;
+                min-width: 280px;
+                border-radius: 12px;
+                border: 1px solid rgba(255, 255, 255, 0.3);
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
             }
             
             /* Mobile navbar brand */
             .navbar-brand {
-                font-size: 1.5rem !important;
+                font-size: 1.4rem !important;
+                font-weight: 600;
             }
             
             .navbar-brand img {
-                height: 32px !important;
-                width: 32px !important;
+                height: 28px !important;
+                width: 28px !important;
             }
         }
         
@@ -396,27 +525,56 @@ if ($isLoggedIn) {
             }
             
             .hero h1 {
-                font-size: 1.8rem;
+                font-size: 1.75rem;
+                line-height: 1.1;
             }
             
             .welcome-back-card {
-                padding: 25px 15px;
-                margin: 0 10px;
+                padding: 28px 20px;
+                margin: 0 16px;
+                border-radius: 14px;
+            }
+            
+            .welcome-back-card h1 {
+                font-size: 1.35rem !important;
             }
             
             .container {
-                padding-left: 15px;
-                padding-right: 15px;
+                padding-left: 16px;
+                padding-right: 16px;
             }
             
             .feature-card,
             .pricing-card {
-                padding: 25px 15px;
+                padding: 24px 16px;
+                border-radius: 14px;
             }
             
             .btn {
-                max-width: 250px;
-                font-size: 0.95rem;
+                max-width: 280px;
+                font-size: 0.9rem;
+                padding: 12px 20px;
+            }
+            
+            .avatar-large {
+                width: 56px;
+                height: 56px;
+                font-size: 1.3rem;
+            }
+            
+            .feature-icon {
+                width: 48px;
+                height: 48px;
+                font-size: 1.2rem;
+            }
+            
+            /* Enhanced sections spacing */
+            .features {
+                padding: 60px 0;
+            }
+            
+            .pricing {
+                padding: 60px 0;
             }
         }
     </style>
