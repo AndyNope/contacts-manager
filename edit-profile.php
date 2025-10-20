@@ -178,6 +178,155 @@ if ($_POST) {
         .btn-outline-secondary {
             border-radius: 10px;
         }
+        
+        /* Professional Profile Photo Section */
+        .profile-photo-section {
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 15px;
+            padding: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .section-title {
+            color: #667eea;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            font-size: 1.1rem;
+        }
+        
+        .photo-upload-container {
+            display: flex;
+            gap: 2rem;
+            align-items: flex-start;
+        }
+        
+        .photo-preview-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .photo-preview {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            color: white;
+            font-weight: bold;
+            border: 4px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+            transition: all 0.3s ease;
+            background-size: cover;
+            background-position: center;
+        }
+        
+        .photo-preview:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 40px rgba(102, 126, 234, 0.4);
+        }
+        
+        .photo-actions {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+        
+        .btn-upload {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border: none;
+            border-radius: 25px;
+            padding: 0.5rem 1.5rem;
+            font-weight: 500;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn-upload:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+            background: linear-gradient(135deg, #5a67d8, #6b46c1);
+        }
+        
+        .photo-url-section {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .upload-help {
+            margin-top: 0.5rem;
+            padding-left: 0.75rem;
+        }
+        
+        .upload-progress {
+            margin-top: 1rem;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        
+        .upload-progress .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 3px;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+        
+        .upload-message {
+            margin-top: 1rem;
+            padding: 0.75rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+        
+        .upload-message .text-success {
+            color: #10b981 !important;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            border-radius: 6px;
+            padding: 0.5rem 0.75rem;
+            display: inline-block;
+        }
+        
+        .upload-message .text-danger {
+            color: #ef4444 !important;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            border-radius: 6px;
+            padding: 0.5rem 0.75rem;
+            display: inline-block;
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .photo-upload-container {
+                flex-direction: column;
+                gap: 1.5rem;
+                text-align: center;
+            }
+            
+            .photo-url-section {
+                width: 100%;
+            }
+            
+            .profile-photo-section {
+                padding: 1.5rem;
+            }
+        }
+        
+        /* Drag and Drop Styling */
+        .photo-preview.drag-over {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.1);
+            transform: scale(1.05);
+        }
     </style>
 </head>
 <body>
@@ -260,50 +409,63 @@ if ($_POST) {
                             
                             <!-- Profile Picture -->
                             <div class="col-12 mb-4">
-                                <h6 class="text-muted mb-3">Profile Picture</h6>
-                                <div class="row">
-                                    <div class="col-md-6 mb-3">
-                                        <label for="photo_file" class="form-label">Upload Image</label>
-                                        <input type="file" class="form-control" id="photo_file" name="photo_file" 
-                                               accept="image/jpeg,image/png,image/gif,image/webp" onchange="uploadProfileImage(this)">
-                                        <div class="form-text">Upload image (JPEG, PNG, GIF, WebP - max. 5MB)</div>
-                                    </div>
-                                    <div class="col-md-6 mb-3">
-                                        <label for="photo" class="form-label">Or enter URL/Path:</label>
-                                        <input type="url" class="form-control" id="photo" name="photo" 
-                                               value="<?= htmlspecialchars($contact['photo'] ?? '') ?>"
-                                               placeholder="https://example.com/image.jpg or uploads/image.jpg" onchange="updateImagePreview()">
-                                        <div class="form-text">URL or relative path to an image</div>
-                                    </div>
-                                </div>
-                                <div id="uploadProgress" class="progress mt-2" style="display: none; height: 4px;">
-                                    <div class="progress-bar bg-primary" role="progressbar" style="width: 0%"></div>
-                                </div>
-                                <div id="uploadMessage" class="mt-2"></div>
-                                
-                                <!-- Preview -->
-                                <div class="mt-3">
-                                    <label class="form-label">Preview</label>
-                                    <div id="imagePreview" class="d-flex align-items-center">
-                                        <div class="avatar-preview me-3" id="avatarPreview" style="width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #667eea, #764ba2); color: white; font-size: 1.5rem; font-weight: bold;">
-                                            <?php if (!empty($contact['photo'])): ?>
-                                                <script>
-                                                document.addEventListener('DOMContentLoaded', function() {
-                                                    updateImagePreview();
-                                                });
-                                                </script>
-                                            <?php else: ?>
-                                                <i class="bi bi-person"></i>
-                                            <?php endif; ?>
+                                <div class="profile-photo-section">
+                                    <h6 class="section-title">
+                                        <i class="bi bi-camera-fill me-2"></i>Profile Picture
+                                    </h6>
+                                    
+                                    <div class="photo-upload-container">
+                                        <div class="photo-preview-section">
+                                            <div class="photo-preview" id="avatarPreview">
+                                                <?php if (!empty($contact['photo'])): ?>
+                                                    <script>
+                                                    document.addEventListener('DOMContentLoaded', function() {
+                                                        updateImagePreview();
+                                                    });
+                                                    </script>
+                                                <?php else: ?>
+                                                    <i class="bi bi-person-fill"></i>
+                                                <?php endif; ?>
+                                            </div>
+                                            
+                                            <div class="photo-actions">
+                                                <label for="photo_file" class="btn btn-primary btn-upload">
+                                                    <i class="bi bi-upload me-2"></i>Upload Photo
+                                                    <input type="file" id="photo_file" name="photo_file" 
+                                                           accept="image/jpeg,image/png,image/gif,image/webp" 
+                                                           onchange="uploadProfileImage(this)" hidden>
+                                                </label>
+                                                <button type="button" class="btn btn-outline-danger btn-sm" 
+                                                        id="removeImageBtn" onclick="removeProfileImage()" 
+                                                        style="display: none;">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <small class="text-muted d-block">Image will be displayed here</small>
-                                            <button type="button" class="btn btn-sm btn-outline-danger mt-1" id="removeImageBtn" 
-                                                    onclick="removeProfileImage()" style="display: none;">
-                                                <i class="bi bi-trash"></i> Remove
-                                            </button>
+                                        
+                                        <div class="photo-url-section">
+                                            <div class="form-floating">
+                                                <input type="url" class="form-control" id="photo" name="photo" 
+                                                       value="<?= htmlspecialchars($contact['photo'] ?? '') ?>"
+                                                       placeholder="https://example.com/image.jpg" 
+                                                       onchange="updateImagePreview()">
+                                                <label for="photo">
+                                                    <i class="bi bi-link-45deg me-2"></i>Or paste image URL
+                                                </label>
+                                            </div>
+                                            <div class="upload-help">
+                                                <small class="text-muted">
+                                                    <i class="bi bi-info-circle me-1"></i>
+                                                    Supports JPEG, PNG, GIF, WebP • Max 5MB
+                                                </small>
+                                            </div>
                                         </div>
                                     </div>
+                                    
+                                    <div id="uploadProgress" class="upload-progress" style="display: none;">
+                                        <div class="progress-bar"></div>
+                                    </div>
+                                    <div id="uploadMessage" class="upload-message"></div>
                                 </div>
                             </div>
                             
@@ -497,27 +659,24 @@ if ($_POST) {
         
         // Drag & Drop for image upload
         const fileInput = document.getElementById('photo_file');
-        const imagePreview = document.getElementById('imagePreview');
+        const imagePreview = document.getElementById('avatarPreview');
         
         // Drag Over
         imagePreview.addEventListener('dragover', function(e) {
             e.preventDefault();
-            this.style.backgroundColor = 'rgba(102, 126, 234, 0.1)';
-            this.style.border = '2px dashed #667eea';
+            this.classList.add('drag-over');
         });
         
         // Drag Leave
         imagePreview.addEventListener('dragleave', function(e) {
             e.preventDefault();
-            this.style.backgroundColor = '';
-            this.style.border = '';
+            this.classList.remove('drag-over');
         });
         
         // Drop
         imagePreview.addEventListener('drop', function(e) {
             e.preventDefault();
-            this.style.backgroundColor = '';
-            this.style.border = '';
+            this.classList.remove('drag-over');
             
             const files = e.dataTransfer.files;
             if (files.length > 0) {
