@@ -74,6 +74,29 @@ $profileUrl = '/private/' . $contactId;
         .btn-action {
             margin: 5px;
         }
+        
+        .btn-purple {
+            background-color: #7c3aed;
+            border-color: #7c3aed;
+            color: white;
+        }
+        
+        .btn-purple:hover {
+            background-color: #6d28d9;
+            border-color: #6d28d9;
+            color: white;
+        }
+        
+        .btn-outline-purple {
+            border-color: #7c3aed;
+            color: #7c3aed;
+        }
+        
+        .btn-outline-purple:hover {
+            background-color: #7c3aed;
+            border-color: #7c3aed;
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -110,17 +133,36 @@ $profileUrl = '/private/' . $contactId;
                         <p class="small text-muted mt-2 mb-0">Scan to save contact</p>
                     </div>
 
+                    <!-- Business Card Section (Owner Only) -->
+                    <?php 
+                    // Check if this is the profile owner viewing their own profile
+                    $isOwner = isset($_SESSION['user_id']) && 
+                              isset($_SESSION['is_private_profile']) && 
+                              $_SESSION['is_private_profile'] && 
+                              $_SESSION['user_id'] == ($contact['created_by'] ?? 0);
+                    ?>
+                    
+                    <?php if ($isOwner): ?>
+                    <div class="alert alert-info text-center mb-4">
+                        <h6 class="mb-3"><i class="bi bi-credit-card me-2"></i>Business Card Tools</h6>
+                        <div class="d-flex flex-wrap justify-content-center gap-2">
+                            <button onclick="previewBusinessCard()" class="btn btn-sm btn-outline-info">
+                                <i class="bi bi-eye me-1"></i>Preview Card
+                            </button>
+                            <a href="/api/business-card-pdf.php?contact=<?= $contactId ?>&format=download" 
+                               target="_blank" class="btn btn-sm btn-outline-purple">
+                                <i class="bi bi-file-earmark-pdf me-1"></i>Download PDF
+                            </a>
+                        </div>
+                        <small class="d-block mt-2 text-muted">
+                            <i class="bi bi-info-circle me-1"></i>Perfect for professional printing
+                        </small>
+                    </div>
+                    <?php endif; ?>
+
                     <!-- Action Buttons -->
                     <div class="text-center mb-4">
                         <div class="d-flex flex-wrap justify-content-center">
-                            <?php 
-                            // Check if this is the profile owner viewing their own profile
-                            $isOwner = isset($_SESSION['user_id']) && 
-                                      isset($_SESSION['is_private_profile']) && 
-                                      $_SESSION['is_private_profile'] && 
-                                      $_SESSION['user_id'] == ($contact['created_by'] ?? 0);
-                            ?>
-                            
                             <?php if ($isOwner): ?>
                             <a href="/edit-profile.php" class="btn btn-warning btn-action">
                                 <i class="bi bi-pencil-square me-2"></i>Edit Profile
@@ -267,6 +309,50 @@ $profileUrl = '/private/' . $contactId;
     
 
     
+    <!-- Business Card Preview Modal -->
+    <div class="modal fade" id="businessCardModal" tabindex="-1" aria-labelledby="businessCardModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="businessCardModalLabel">
+                        <i class="bi bi-credit-card me-2"></i>Business Card Preview
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <div id="businessCardContainer" class="mb-4 p-4" style="background: #f8f9fa; border-radius: 10px;">
+                        <!-- Business card preview will be loaded here -->
+                    </div>
+                    
+                    <p class="text-muted mb-4">
+                        Professional business card ready for printing (3.5" × 2")
+                    </p>
+                    
+                    <div class="d-flex justify-content-center gap-2 flex-wrap">
+                        <a href="/api/business-card-pdf.php?contact=<?= $contactId ?>&format=download" 
+                           target="_blank" class="btn btn-purple">
+                            <i class="bi bi-file-earmark-pdf me-1"></i>Download PDF
+                        </a>
+                        <button onclick="printBusinessCard()" class="btn btn-success">
+                            <i class="bi bi-printer me-1"></i>Print
+                        </button>
+                        <button onclick="copyCardInfo()" class="btn btn-secondary">
+                            <i class="bi bi-clipboard me-1"></i>Copy Info
+                        </button>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <div class="alert alert-info mb-0 w-100">
+                        <small>
+                            <i class="bi bi-lightbulb me-1"></i>
+                            <strong>Pro Tip:</strong> Download the PDF and send it to any professional printing company. Standard size is 3.5" × 2" (89mm × 51mm).
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
@@ -281,6 +367,86 @@ $profileUrl = '/private/' . $contactId;
             } else {
                 copyProfileLink();
             }
+        }
+        
+        function previewBusinessCard() {
+            const modal = new bootstrap.Modal(document.getElementById('businessCardModal'));
+            const container = document.getElementById('businessCardContainer');
+            
+            // Show loading
+            container.innerHTML = '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div>';
+            modal.show();
+            
+            // Load business card preview
+            const contactId = <?= $contactId ?>;
+            
+            // Create business card preview HTML
+            setTimeout(() => {
+                container.innerHTML = `
+                    <div style="
+                        width: 350px;
+                        height: 200px;
+                        margin: 0 auto;
+                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                        border-radius: 12px;
+                        color: white;
+                        padding: 20px;
+                        display: flex;
+                        flex-direction: column;
+                        justify-content: center;
+                        position: relative;
+                        box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+                        font-family: 'Helvetica Neue', Arial, sans-serif;
+                    ">
+                        <div style="position: absolute; top: 15px; right: 15px; width: 30px; height: 30px; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold;">EC</div>
+                        <h1 style="font-size: 18px; font-weight: bold; margin-bottom: 4px; line-height: 1.1;"><?= htmlspecialchars($contactName) ?></h1>
+                        <?php if ($contact['position'] ?? $jobTitle): ?>
+                        <p style="font-size: 14px; opacity: 0.9; margin-bottom: 2px;"><?= htmlspecialchars($contact['position'] ?? $jobTitle) ?></p>
+                        <?php endif; ?>
+                        <?php if ($contact['company'] ?? $company): ?>
+                        <p style="font-size: 12px; opacity: 0.8; margin-bottom: 8px;"><?= htmlspecialchars($contact['company'] ?? $company) ?></p>
+                        <?php endif; ?>
+                        <div style="font-size: 10px; line-height: 1.3; opacity: 0.9;">
+                            <?php if ($contact['email'] ?? $email): ?>
+                            <p style="margin-bottom: 1px;"><?= htmlspecialchars($contact['email'] ?? $email) ?></p>
+                            <?php endif; ?>
+                            <?php if ($contact['phone'] ?? $phone): ?>
+                            <p style="margin-bottom: 1px;"><?= htmlspecialchars($contact['phone'] ?? $phone) ?></p>
+                            <?php endif; ?>
+                            <?php if ($contact['website'] ?? $website): ?>
+                            <p style="margin-bottom: 1px;"><?= htmlspecialchars(str_replace(['http://', 'https://'], '', $contact['website'] ?? $website)) ?></p>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                `;
+            }, 500);
+        }
+        
+        function printBusinessCard() {
+            const printWindow = window.open('/api/business-card-pdf.php?contact=<?= $contactId ?>&format=download', '_blank');
+            if (printWindow) {
+                printWindow.onload = function() {
+                    printWindow.print();
+                };
+            }
+        }
+        
+        function copyCardInfo() {
+            const cardInfo = `<?= htmlspecialchars($contactName) ?>
+<?= ($contact['position'] ?? $jobTitle) ? htmlspecialchars($contact['position'] ?? $jobTitle) . "\n" : '' ?><?= ($contact['company'] ?? $company) ? htmlspecialchars($contact['company'] ?? $company) . "\n" : '' ?><?= ($contact['email'] ?? $email) ? htmlspecialchars($contact['email'] ?? $email) . "\n" : '' ?><?= ($contact['phone'] ?? $phone) ? htmlspecialchars($contact['phone'] ?? $phone) . "\n" : '' ?><?= ($contact['website'] ?? $website) ? htmlspecialchars($contact['website'] ?? $website) . "\n" : '' ?>`;
+            
+            navigator.clipboard.writeText(cardInfo).then(() => {
+                alert('Business card information copied to clipboard!');
+            }).catch(() => {
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = cardInfo;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                alert('Business card information copied to clipboard!');
+            });
         }
         
 

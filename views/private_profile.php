@@ -229,6 +229,39 @@ $profileUrl = generatePrivateProfileUrl($contact);
                 
                 <!-- Action Buttons -->
                 <div class="mt-8 pt-6 border-t border-gray-200 dark:border-gray-600">
+                    <?php 
+                    // Check if this is the user's own profile
+                    $isOwnProfile = isset($_SESSION['user_id']) && $_SESSION['user_id'] == $contact['user_id'];
+                    ?>
+                    
+                    <?php if ($isOwnProfile): ?>
+                        <!-- Owner-only actions -->
+                        <div class="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                            <h4 class="font-semibold text-blue-800 dark:text-blue-200 mb-3 flex items-center">
+                                <i class="fas fa-id-card mr-2"></i>
+                                Business Card Tools
+                            </h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <button onclick="previewBusinessCard()" 
+                                        class="flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                                    <i class="fas fa-eye mr-2"></i>
+                                    Preview Card
+                                </button>
+                                
+                                <a href="/api/business-card-pdf.php?contact=<?= $contact['id'] ?>&format=download" 
+                                   target="_blank"
+                                   class="flex items-center justify-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
+                                    <i class="fas fa-file-pdf mr-2"></i>
+                                    Download PDF
+                                </a>
+                            </div>
+                            <p class="text-xs text-blue-700 dark:text-blue-300 mt-2">
+                                <i class="fas fa-info-circle mr-1"></i>
+                                Perfect for professional printing companies
+                            </p>
+                        </div>
+                    <?php endif; ?>
+                    
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <a href="/api/vcard?contact=<?= $contact['id'] ?>" 
                            class="flex items-center justify-center px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors">
@@ -308,6 +341,54 @@ $profileUrl = generatePrivateProfileUrl($contact);
         </div>
     </div>
     
+    <!-- Business Card Preview Modal -->
+    <div id="businessCardModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Business Card Preview</h3>
+                <button onclick="closeBusinessCardPreview()" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="text-center mb-4">
+                <div id="businessCardContainer" class="bg-gray-50 dark:bg-gray-700 rounded-lg p-8 mb-4">
+                    <!-- Business card preview will be loaded here -->
+                </div>
+                
+                <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                    Professional business card ready for printing (3.5" × 2")
+                </p>
+                
+                <div class="flex gap-3 justify-center flex-wrap">
+                    <a href="/api/business-card-pdf.php?contact=<?= $contact['id'] ?>&format=download" 
+                       target="_blank"
+                       class="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors">
+                        <i class="fas fa-file-pdf mr-1"></i>
+                        Download PDF
+                    </a>
+                    <button onclick="printBusinessCard()" 
+                            class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors">
+                        <i class="fas fa-print mr-1"></i>
+                        Print
+                    </button>
+                    <button onclick="copyCardInfo()" 
+                            class="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors">
+                        <i class="fas fa-copy mr-1"></i>
+                        Copy Info
+                    </button>
+                </div>
+            </div>
+            
+            <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3">
+                <p class="text-xs text-blue-700 dark:text-blue-300">
+                    <i class="fas fa-lightbulb mr-1"></i>
+                    <strong>Pro Tip:</strong> Download the PDF and send it to any professional printing company. Standard size is 3.5" × 2" (89mm × 51mm).
+                </p>
+            </div>
+        </div>
+    </div>
+    
     <script>
         function shareProfile() {
             if (navigator.share) {
@@ -322,6 +403,98 @@ $profileUrl = generatePrivateProfileUrl($contact);
                     alert('Profile link copied to clipboard!');
                 });
             }
+        }
+        
+        function previewBusinessCard() {
+            const modal = document.getElementById('businessCardModal');
+            const container = document.getElementById('businessCardContainer');
+            
+            // Show loading
+            container.innerHTML = '<div class="animate-spin rounded-full h-16 w-16 border-b-2 border-purple-600 mx-auto"></div>';
+            modal.classList.remove('hidden');
+            
+            // Load business card preview
+            const contactId = <?= $contact['id'] ?>;
+            fetch(`/api/business-card-pdf.php?contact=${contactId}&format=preview`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        container.innerHTML = `
+                            <div class="business-card-preview" style="
+                                width: 350px;
+                                height: 200px;
+                                margin: 0 auto;
+                                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                                border-radius: 12px;
+                                color: white;
+                                padding: 20px;
+                                display: flex;
+                                flex-direction: column;
+                                justify-content: center;
+                                position: relative;
+                                box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+                                font-family: 'Helvetica Neue', Arial, sans-serif;
+                            ">
+                                <div style="position: absolute; top: 15px; right: 15px; width: 30px; height: 30px; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold;">EC</div>
+                                <h1 style="font-size: 18px; font-weight: bold; margin-bottom: 4px; line-height: 1.1;"><?= htmlspecialchars($contact['first_name'] . ' ' . $contact['last_name']) ?></h1>
+                                <?php if (!empty($contact['position'])): ?>
+                                <p style="font-size: 14px; opacity: 0.9; margin-bottom: 2px;"><?= htmlspecialchars($contact['position']) ?></p>
+                                <?php endif; ?>
+                                <?php if (!empty($contact['company'])): ?>
+                                <p style="font-size: 12px; opacity: 0.8; margin-bottom: 8px;"><?= htmlspecialchars($contact['company']) ?></p>
+                                <?php endif; ?>
+                                <div style="font-size: 10px; line-height: 1.3; opacity: 0.9;">
+                                    <?php if (!empty($contact['email'])): ?>
+                                    <p style="margin-bottom: 1px;"><?= htmlspecialchars($contact['email']) ?></p>
+                                    <?php endif; ?>
+                                    <?php if (!empty($contact['phone'])): ?>
+                                    <p style="margin-bottom: 1px;"><?= htmlspecialchars($contact['phone']) ?></p>
+                                    <?php endif; ?>
+                                    <?php if (!empty($contact['website'])): ?>
+                                    <p style="margin-bottom: 1px;"><?= htmlspecialchars(str_replace(['http://', 'https://'], '', $contact['website'])) ?></p>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        container.innerHTML = '<p class="text-red-500">Failed to load business card preview</p>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    container.innerHTML = '<p class="text-red-500">Failed to load business card preview</p>';
+                });
+        }
+        
+        function closeBusinessCardPreview() {
+            document.getElementById('businessCardModal').classList.add('hidden');
+        }
+        
+        function printBusinessCard() {
+            const printWindow = window.open('/api/business-card-pdf.php?contact=<?= $contact['id'] ?>&format=download', '_blank');
+            if (printWindow) {
+                printWindow.onload = function() {
+                    printWindow.print();
+                };
+            }
+        }
+        
+        function copyCardInfo() {
+            const cardInfo = `<?= htmlspecialchars($contact['first_name'] . ' ' . $contact['last_name']) ?>
+<?= !empty($contact['position']) ? htmlspecialchars($contact['position']) . "\n" : '' ?><?= !empty($contact['company']) ? htmlspecialchars($contact['company']) . "\n" : '' ?><?= !empty($contact['email']) ? htmlspecialchars($contact['email']) . "\n" : '' ?><?= !empty($contact['phone']) ? htmlspecialchars($contact['phone']) . "\n" : '' ?><?= !empty($contact['website']) ? htmlspecialchars($contact['website']) . "\n" : '' ?>`;
+            
+            navigator.clipboard.writeText(cardInfo).then(() => {
+                alert('Business card information copied to clipboard!');
+            }).catch(() => {
+                // Fallback
+                const textArea = document.createElement('textarea');
+                textArea.value = cardInfo;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                alert('Business card information copied to clipboard!');
+            });
         }
         
         function showQRCode() {
@@ -371,10 +544,16 @@ $profileUrl = generatePrivateProfileUrl($contact);
             });
         }
         
-        // Close modal when clicking outside
+        // Close modals when clicking outside
         document.getElementById('qrModal').addEventListener('click', function(e) {
             if (e.target === this) {
                 closeQRCode();
+            }
+        });
+        
+        document.getElementById('businessCardModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeBusinessCardPreview();
             }
         });
         

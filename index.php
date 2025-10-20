@@ -430,7 +430,29 @@ if ($isLoggedIn) {
                 color: white;
             }
             
-            /* Feature cards mobile spacing */
+            /* Mobile-specific button improvements */
+            .mobile-signin-btn {
+                background: rgba(255, 255, 255, 0.95) !important;
+                border: 2px solid var(--primary-color) !important;
+                color: var(--primary-color) !important;
+                font-weight: 600 !important;
+                padding: 12px 24px !important;
+                border-radius: 10px !important;
+                width: 100% !important;
+                margin-bottom: 8px !important;
+            }
+            
+            .mobile-signup-btn {
+                background: var(--primary-color) !important;
+                border: 2px solid var(--primary-color) !important;
+                color: white !important;
+                font-weight: 600 !important;
+                padding: 12px 24px !important;
+                border-radius: 10px !important;
+                width: 100% !important;
+            }
+            
+            .theme-toggle {\n                padding: 8px 16px;\n                font-size: 0.85rem;\n                margin-top: 8px;\n                border-radius: 8px;\n            }            /* Feature cards mobile spacing */
             .feature-card {
                 margin-bottom: 16px;
                 padding: 28px 20px;
@@ -452,34 +474,16 @@ if ($isLoggedIn) {
             }
             
             /* Navigation mobile improvements - HiHello inspired */
-            .navbar {
-                padding: 12px 0;
-            }
-            
-            .navbar-toggler {
-                border: none;
-                padding: 8px;
-                border-radius: 8px;
-            }
-            
-            .navbar-toggler:focus {
-                box-shadow: none;
-            }
-            
-            .theme-toggle {
-                padding: 8px 16px;
-                font-size: 0.85rem;
-                margin-top: 8px;
-                border-radius: 8px;
-            }
+                        /* Navigation mobile improvements - HiHello inspired */\n            .navbar {\n                padding: 12px 0;\n            }\n            \n            .navbar-toggler {\n                border: none;\n                padding: 8px;\n                border-radius: 8px;\n            }\n            \n            .navbar-toggler:focus {\n                box-shadow: none;\n            }\n            \n            /* Mobile-specific button improvements */\n            .mobile-signin-btn {\n                background: rgba(255, 255, 255, 0.95) !important;\n                border: 2px solid var(--primary-color) !important;\n                color: var(--primary-color) !important;\n                font-weight: 600 !important;\n                padding: 12px 24px !important;\n                border-radius: 10px !important;\n                width: 100% !important;\n                margin-bottom: 8px !important;\n            }\n            \n            .mobile-signup-btn {\n                background: var(--primary-color) !important;\n                border: 2px solid var(--primary-color) !important;\n                color: white !important;\n                font-weight: 600 !important;\n                padding: 12px 24px !important;\n                border-radius: 10px !important;\n                width: 100% !important;\n            }\n            \n            .theme-toggle {\n                background: rgba(59, 130, 246, 0.1) !important;\n                border: 2px solid var(--primary-color) !important;\n                color: var(--primary-color) !important;\n                font-weight: 600 !important;\n                padding: 10px 20px !important;\n                border-radius: 10px !important;\n                width: 100% !important;\n                margin-top: 12px !important;\n                font-size: 0.9rem;\n            }
             
             .navbar-collapse {
-                background: rgba(255, 255, 255, 0.95);
+                background: rgba(255, 255, 255, 0.98);
                 backdrop-filter: blur(20px);
                 border-radius: 12px;
-                padding: 16px;
+                padding: 20px;
                 margin-top: 12px;
-                border: 1px solid rgba(255, 255, 255, 0.3);
+                border: 1px solid rgba(255, 255, 255, 0.5);
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
             }
             
             .navbar-nav {
@@ -492,9 +496,17 @@ if ($isLoggedIn) {
             
             .nav-link {
                 color: var(--primary-color) !important;
-                padding: 12px 16px !important;
-                border-radius: 8px;
-                font-weight: 500;
+                padding: 14px 20px !important;
+                border-radius: 10px;
+                font-weight: 600;
+                background: rgba(59, 130, 246, 0.05);
+                margin-bottom: 4px;
+                transition: all 0.2s ease;
+            }
+            
+            .nav-link:hover {
+                background: rgba(59, 130, 246, 0.1);
+                color: var(--primary-color) !important;
             }
             
             .dropdown-menu {
@@ -606,12 +618,12 @@ if ($isLoggedIn) {
                             <a class="nav-link" href="#contact">Contact</a>
                         </li>
                         <li class="nav-item ms-3">
-                            <a class="btn btn-outline-light" href="/login">
+                            <a class="btn btn-outline-primary mobile-signin-btn" href="/login">
                                 <i class="bi bi-box-arrow-in-right me-1"></i>Sign In
                             </a>
                         </li>
                         <li class="nav-item ms-2">
-                            <a class="btn btn-warning" href="/register">
+                            <a class="btn btn-primary mobile-signup-btn" href="/register">
                                 <i class="bi bi-person-plus me-1"></i>Sign Up
                             </a>
                         </li>
@@ -619,8 +631,8 @@ if ($isLoggedIn) {
                     <!-- Theme toggle button -->
                     <li class="nav-item ms-3">
                         <button class="btn theme-toggle" onclick="toggleTheme()" id="themeToggle">
-                            <i class="bi bi-moon-fill" id="themeIcon"></i>
-                            <span id="themeText">Dark</span>
+                            <i class="bi bi-moon-fill me-2" id="themeIcon"></i>
+                            <span id="themeText">Dark Mode</span>
                         </button>
                     </li>
 
