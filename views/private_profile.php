@@ -241,7 +241,7 @@ $profileUrl = generatePrivateProfileUrl($contact);
                                 <i class="fas fa-id-card mr-2"></i>
                                 Business Card Tools
                             </h4>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
                                 <button onclick="previewBusinessCard()" 
                                         class="flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
                                     <i class="fas fa-eye mr-2"></i>
@@ -252,12 +252,19 @@ $profileUrl = generatePrivateProfileUrl($contact);
                                    target="_blank"
                                    class="flex items-center justify-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
                                     <i class="fas fa-file-pdf mr-2"></i>
-                                    Download PDF
+                                    Two-Sided PDF
+                                </a>
+                                
+                                <a href="/api/business-card-pdf.php?contact=<?= $contact['id'] ?>&format=download-qr" 
+                                   target="_blank"
+                                   class="flex items-center justify-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                                    <i class="fas fa-qrcode mr-2"></i>
+                                    QR Card
                                 </a>
                             </div>
-                            <p class="text-xs text-blue-700 dark:text-blue-300 mt-2">
+                            <p class="text-xs text-blue-700 dark:text-blue-300">
                                 <i class="fas fa-info-circle mr-1"></i>
-                                Perfect for professional printing companies
+                                Perfect for professional printing companies • QR code links directly to your profile
                             </p>
                         </div>
                     <?php endif; ?>
@@ -357,7 +364,8 @@ $profileUrl = generatePrivateProfileUrl($contact);
                 </div>
                 
                 <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                    Professional business card ready for printing (3.5" × 2")
+                    Professional business card ready for printing (3.5" × 2")<br>
+                    <span class="text-xs">Two-sided version includes QR code on back for digital profile access</span>
                 </p>
                 
                 <div class="flex gap-3 justify-center flex-wrap">
@@ -365,10 +373,16 @@ $profileUrl = generatePrivateProfileUrl($contact);
                        target="_blank"
                        class="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors">
                         <i class="fas fa-file-pdf mr-1"></i>
-                        Download PDF
+                        Two-Sided PDF
+                    </a>
+                    <a href="/api/business-card-pdf.php?contact=<?= $contact['id'] ?>&format=download-qr" 
+                       target="_blank"
+                       class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors">
+                        <i class="fas fa-qrcode mr-1"></i>
+                        QR Card
                     </a>
                     <button onclick="printBusinessCard()" 
-                            class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors">
+                            class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors">
                         <i class="fas fa-print mr-1"></i>
                         Print
                     </button>
@@ -383,7 +397,7 @@ $profileUrl = generatePrivateProfileUrl($contact);
             <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3">
                 <p class="text-xs text-blue-700 dark:text-blue-300">
                     <i class="fas fa-lightbulb mr-1"></i>
-                    <strong>Pro Tip:</strong> Download the PDF and send it to any professional printing company. Standard size is 3.5" × 2" (89mm × 51mm).
+                    <strong>Pro Tip:</strong> Choose "Two-Sided PDF" for front + QR back, or "QR Card" for QR-only back. Perfect for any professional printing company!
                 </p>
             </div>
         </div>
@@ -419,6 +433,12 @@ $profileUrl = generatePrivateProfileUrl($contact);
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
+                        const profilePicHtml = <?php if (!empty($contact['photo'])): ?>
+                            '<div style="position: absolute; top: 15px; left: 15px; width: 45px; height: 45px; border-radius: 50%; overflow: hidden; border: 2px solid rgba(255,255,255,0.3);"><img src="<?= htmlspecialchars($contact['photo']) ?>" style="width: 100%; height: 100%; object-fit: cover;"></div>'
+                        <?php else: ?>
+                            '<div style="position: absolute; top: 15px; left: 15px; width: 45px; height: 45px; border-radius: 50%; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 18px;"><?= strtoupper(substr($contact['first_name'], 0, 1) . substr($contact['last_name'], 0, 1)) ?></div>'
+                        <?php endif; ?>;
+                        
                         container.innerHTML = `
                             <div class="business-card-preview" style="
                                 width: 350px;
@@ -436,23 +456,26 @@ $profileUrl = generatePrivateProfileUrl($contact);
                                 font-family: 'Helvetica Neue', Arial, sans-serif;
                             ">
                                 <div style="position: absolute; top: 15px; right: 15px; width: 30px; height: 30px; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold;">EC</div>
-                                <h1 style="font-size: 18px; font-weight: bold; margin-bottom: 4px; line-height: 1.1;"><?= htmlspecialchars($contact['first_name'] . ' ' . $contact['last_name']) ?></h1>
-                                <?php if (!empty($contact['position'])): ?>
-                                <p style="font-size: 14px; opacity: 0.9; margin-bottom: 2px;"><?= htmlspecialchars($contact['position']) ?></p>
-                                <?php endif; ?>
-                                <?php if (!empty($contact['company'])): ?>
-                                <p style="font-size: 12px; opacity: 0.8; margin-bottom: 8px;"><?= htmlspecialchars($contact['company']) ?></p>
-                                <?php endif; ?>
-                                <div style="font-size: 10px; line-height: 1.3; opacity: 0.9;">
-                                    <?php if (!empty($contact['email'])): ?>
-                                    <p style="margin-bottom: 1px;"><?= htmlspecialchars($contact['email']) ?></p>
+                                ${profilePicHtml}
+                                <div style="margin-left: 70px;">
+                                    <h1 style="font-size: 18px; font-weight: bold; margin-bottom: 4px; line-height: 1.1;"><?= htmlspecialchars($contact['first_name'] . ' ' . $contact['last_name']) ?></h1>
+                                    <?php if (!empty($contact['position'])): ?>
+                                    <p style="font-size: 14px; opacity: 0.9; margin-bottom: 2px;"><?= htmlspecialchars($contact['position']) ?></p>
                                     <?php endif; ?>
-                                    <?php if (!empty($contact['phone'])): ?>
-                                    <p style="margin-bottom: 1px;"><?= htmlspecialchars($contact['phone']) ?></p>
+                                    <?php if (!empty($contact['company'])): ?>
+                                    <p style="font-size: 12px; opacity: 0.8; margin-bottom: 8px;"><?= htmlspecialchars($contact['company']) ?></p>
                                     <?php endif; ?>
-                                    <?php if (!empty($contact['website'])): ?>
-                                    <p style="margin-bottom: 1px;"><?= htmlspecialchars(str_replace(['http://', 'https://'], '', $contact['website'])) ?></p>
-                                    <?php endif; ?>
+                                    <div style="font-size: 10px; line-height: 1.3; opacity: 0.9;">
+                                        <?php if (!empty($contact['email'])): ?>
+                                        <p style="margin-bottom: 1px;"><?= htmlspecialchars($contact['email']) ?></p>
+                                        <?php endif; ?>
+                                        <?php if (!empty($contact['phone'])): ?>
+                                        <p style="margin-bottom: 1px;"><?= htmlspecialchars($contact['phone']) ?></p>
+                                        <?php endif; ?>
+                                        <?php if (!empty($contact['website'])): ?>
+                                        <p style="margin-bottom: 1px;"><?= htmlspecialchars(str_replace(['http://', 'https://'], '', $contact['website'])) ?></p>
+                                        <?php endif; ?>
+                                    </div>
                                 </div>
                             </div>
                         `;
