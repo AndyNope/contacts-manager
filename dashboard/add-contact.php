@@ -251,8 +251,10 @@ if ($_POST) {
         
         .photo-upload-container {
             display: flex;
-            gap: 2rem;
-            align-items: flex-start;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
         }
         
         .photo-preview-section {
@@ -308,8 +310,8 @@ if ($_POST) {
         }
         
         .photo-url-section {
-            flex: 1;
-            min-width: 0;
+            width: 100%;
+            max-width: 400px;
         }
         
         .upload-help {
@@ -364,21 +366,6 @@ if ($_POST) {
             background: rgba(30, 58, 138, 0.1);
             transform: scale(1.05);
         }
-        
-        @media (max-width: 768px) {
-            .photo-upload-container {
-                flex-direction: column;
-                gap: 1.5rem;
-                text-align: center;
-            }
-            
-            .photo-url-section {
-                width: 100%;
-            }
-            
-            .profile-photo-section {
-                padding: 1.5rem;
-            }
         
         @media (max-width: 768px) {
             .sidebar {
@@ -632,23 +619,24 @@ if ($_POST) {
                                         </button>
                                     </div>
                                 </div>
-                                
-                                <div class="photo-url-section">
-                                    <div class="form-floating">
-                                        <input type="url" class="form-control" id="photo" name="photo" 
-                                               value="<?= htmlspecialchars($_POST['photo'] ?? '') ?>"
-                                               placeholder="https://example.com/image.jpg" 
-                                               onchange="updateImagePreview()">
-                                        <label for="photo">
-                                            <i class="bi bi-link-45deg me-2"></i>Or paste image URL
-                                        </label>
-                                    </div>
-                                    <div class="upload-help">
-                                        <small class="text-muted">
-                                            <i class="bi bi-info-circle me-1"></i>
-                                            Supports JPEG, PNG, GIF, WebP • Max 5MB
-                                        </small>
-                                    </div>
+                            </div>
+                            
+                            <!-- URL field below upload section -->
+                            <div class="photo-url-section">
+                                <div class="form-floating">
+                                    <input type="url" class="form-control" id="photo" name="photo" 
+                                           value="<?= htmlspecialchars($_POST['photo'] ?? '') ?>"
+                                           placeholder="https://example.com/image.jpg" 
+                                           onchange="updateImagePreview()">
+                                    <label for="photo">
+                                        <i class="bi bi-link-45deg me-2"></i>Or paste image URL
+                                    </label>
+                                </div>
+                                <div class="upload-help">
+                                    <small class="text-muted">
+                                        <i class="bi bi-info-circle me-1"></i>
+                                        Supports JPEG, PNG, GIF, WebP • Max 5MB
+                                    </small>
                                 </div>
                             </div>
                             
