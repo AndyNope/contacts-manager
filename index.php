@@ -178,10 +178,13 @@ if ($isLoggedIn) {
 
         .feature-card h4 {
             color: var(--primary-color) !important;
+            margin-bottom: 15px;
+            font-weight: 600;
         }
 
         .feature-card p {
             color: var(--text-muted) !important;
+            line-height: 1.6;
         }
 
         .feature-icon {
@@ -195,6 +198,7 @@ if ($isLoggedIn) {
             justify-content: center;
             font-size: 2rem;
             margin: 0 auto 20px;
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
         }
 
         /* Pricing Section */
@@ -212,10 +216,13 @@ if ($isLoggedIn) {
             transition: transform 0.3s ease, border-color 0.3s ease;
             height: 100%;
             color: var(--text-color);
+            box-shadow: 0 5px 20px var(--shadow);
         }
 
         .pricing-card h3 {
             color: var(--primary-color) !important;
+            font-weight: 700;
+            margin-bottom: 20px;
         }
 
         .pricing-card .text-muted {
@@ -241,11 +248,13 @@ if ($isLoggedIn) {
             font-size: 3rem;
             font-weight: 700;
             color: var(--primary-color);
+            margin: 20px 0;
         }
 
         .price-period {
-            color: #6b7280;
+            color: var(--text-muted);
             font-size: 1rem;
+            font-weight: 400;
         }
 
         /* Footer */
@@ -272,18 +281,86 @@ if ($isLoggedIn) {
 
         /* Responsive adjustments */
         @media (max-width: 768px) {
+            /* Hero section mobile improvements */
+            .hero {
+                padding: 60px 0;
+            }
+            
             .hero h1 {
-                font-size: 2.5rem;
+                font-size: 2.2rem;
+                line-height: 1.3;
             }
             
+            .hero .lead {
+                font-size: 1.1rem;
+            }
+            
+            /* Welcome back card mobile layout */
+            .welcome-back-card {
+                padding: 30px 20px;
+                margin: 0 15px;
+            }
+            
+            /* Mobile-friendly avatar and text layout */
+            .welcome-back-card .d-flex {
+                flex-direction: column !important;
+                text-align: center !important;
+            }
+            
+            .welcome-back-card .text-start {
+                text-align: center !important;
+                margin-top: 20px;
+            }
+            
+            .avatar-large {
+                width: 70px;
+                height: 70px;
+                font-size: 1.8rem;
+                margin: 0 auto 20px auto !important;
+            }
+            
+            /* Mobile button improvements */
+            .d-flex.gap-3.flex-wrap {
+                flex-direction: column !important;
+                gap: 15px !important;
+                align-items: center;
+            }
+            
+            .btn {
+                width: 100%;
+                max-width: 280px;
+                padding: 12px 20px;
+                font-size: 1rem;
+            }
+            
+            /* Feature cards mobile spacing */
+            .feature-card {
+                margin-bottom: 20px;
+                padding: 30px 20px;
+            }
+            
+            .feature-icon {
+                width: 60px;
+                height: 60px;
+                font-size: 1.5rem;
+            }
+            
+            /* Pricing cards mobile */
+            .pricing-card {
+                padding: 30px 20px;
+                margin-bottom: 20px;
+            }
+            
+            /* Navigation mobile improvements */
             .theme-toggle {
-                padding: 6px 12px;
+                padding: 8px 15px;
                 font-size: 0.9rem;
+                margin-top: 10px;
             }
             
-            /* Fix mobile navbar alignment */
             .navbar-collapse {
                 text-align: right;
+                margin-top: 15px;
             }
             
             .navbar-nav {
@@ -292,11 +369,54 @@ if ($isLoggedIn) {
             
             .nav-item {
                 text-align: right;
+                margin-bottom: 8px;
             }
             
             .dropdown-menu {
                 right: 0;
                 left: auto;
+                min-width: 250px;
+            }
+            
+            /* Mobile navbar brand */
+            .navbar-brand {
+                font-size: 1.5rem !important;
+            }
+            
+            .navbar-brand img {
+                height: 32px !important;
+                width: 32px !important;
+            }
+        }
+        
+        /* Extra small devices (phones, less than 576px) */
+        @media (max-width: 576px) {
+            .hero {
+                padding: 40px 0;
+            }
+            
+            .hero h1 {
+                font-size: 1.8rem;
+            }
+            
+            .welcome-back-card {
+                padding: 25px 15px;
+                margin: 0 10px;
+            }
+            
+            .container {
+                padding-left: 15px;
+                padding-right: 15px;
+            }
+            
+            .feature-card,
+            .pricing-card {
+                padding: 25px 15px;
+            }
+            
+            .btn {
+                max-width: 250px;
+                font-size: 0.95rem;
             }
         }
     </style>
