@@ -67,6 +67,7 @@ if ($_POST) {
         $twitter = trim($_POST['twitter'] ?? '');
         $facebook = trim($_POST['facebook'] ?? '');
         $instagram = trim($_POST['instagram'] ?? '');
+        $photo = trim($_POST['photo'] ?? '');
         
         // Validation
         if (empty($firstName) || empty($lastName)) {
@@ -93,6 +94,7 @@ if ($_POST) {
                 twitter = ?, 
                 facebook = ?, 
                 instagram = ?,
+                photo = ?,
                 updated_at = NOW()
             WHERE id = ? AND created_by = ?
         ");
@@ -100,7 +102,7 @@ if ($_POST) {
         $stmt->execute([
             $firstName, $lastName, $email, $phone, $position, $company, 
             $website, $address, $notes, $linkedin, $twitter, $facebook, 
-            $instagram, $contact['id'], $_SESSION['user_id']
+            $instagram, $photo, $contact['id'], $_SESSION['user_id']
         ]);
         
         // Also update user table email if it changed
@@ -256,6 +258,55 @@ if ($_POST) {
                                 </div>
                             </div>
                             
+                            <!-- Profile Picture -->
+                            <div class="col-12 mb-4">
+                                <h6 class="text-muted mb-3">Profile Picture</h6>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="photo_file" class="form-label">Upload Image</label>
+                                        <input type="file" class="form-control" id="photo_file" name="photo_file" 
+                                               accept="image/jpeg,image/png,image/gif,image/webp" onchange="uploadProfileImage(this)">
+                                        <div class="form-text">Upload image (JPEG, PNG, GIF, WebP - max. 5MB)</div>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="photo" class="form-label">Or enter URL/Path:</label>
+                                        <input type="url" class="form-control" id="photo" name="photo" 
+                                               value="<?= htmlspecialchars($contact['photo'] ?? '') ?>"
+                                               placeholder="https://example.com/image.jpg or uploads/image.jpg" onchange="updateImagePreview()">
+                                        <div class="form-text">URL or relative path to an image</div>
+                                    </div>
+                                </div>
+                                <div id="uploadProgress" class="progress mt-2" style="display: none; height: 4px;">
+                                    <div class="progress-bar bg-primary" role="progressbar" style="width: 0%"></div>
+                                </div>
+                                <div id="uploadMessage" class="mt-2"></div>
+                                
+                                <!-- Preview -->
+                                <div class="mt-3">
+                                    <label class="form-label">Preview</label>
+                                    <div id="imagePreview" class="d-flex align-items-center">
+                                        <div class="avatar-preview me-3" id="avatarPreview" style="width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #667eea, #764ba2); color: white; font-size: 1.5rem; font-weight: bold;">
+                                            <?php if (!empty($contact['photo'])): ?>
+                                                <script>
+                                                document.addEventListener('DOMContentLoaded', function() {
+                                                    updateImagePreview();
+                                                });
+                                                </script>
+                                            <?php else: ?>
+                                                <i class="bi bi-person"></i>
+                                            <?php endif; ?>
+                                        </div>
+                                        <div>
+                                            <small class="text-muted d-block">Image will be displayed here</small>
+                                            <button type="button" class="btn btn-sm btn-outline-danger mt-1" id="removeImageBtn" 
+                                                    onclick="removeProfileImage()" style="display: none;">
+                                                <i class="bi bi-trash"></i> Remove
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
                             <div class="col-12 mb-3">
                                 <div class="form-floating">
                                     <textarea class="form-control" id="address" name="address" style="height: 80px"><?= htmlspecialchars($contact['address'] ?? '') ?></textarea>
@@ -330,5 +381,154 @@ if ($_POST) {
     
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+    // Profile image upload functionality
+    function uploadProfileImage(input) {
+        const file = input.files[0];
+        if (!file) return;
+        
+        const formData = new FormData();
+        formData.append('profile_image', file);
+        
+        // Show progress
+        const progressContainer = document.getElementById('uploadProgress');
+        const progressBar = progressContainer.querySelector('.progress-bar');
+        const messageDiv = document.getElementById('uploadMessage');
+        
+        progressContainer.style.display = 'block';
+        progressBar.style.width = '0%';
+        messageDiv.innerHTML = '';
+        
+        console.log('Starting upload for file:', file.name);
+        
+        // Upload via fetch
+        fetch('/api/upload_handler.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            console.log('Upload response status:', response.status);
+            return response.json();
+        })
+        .then(data => {
+            console.log('Upload response data:', data);
+            progressContainer.style.display = 'none';
+            
+            if (data.success) {
+                // Set URL in the URL field
+                document.getElementById('photo').value = data.url;
+                
+                // Update preview
+                updateImagePreview();
+                
+                // Success message
+                messageDiv.innerHTML = `<small class="text-success"><i class="bi bi-check-circle me-1"></i>${data.message}</small>`;
+                
+                // Reset file input
+                input.value = '';
+            } else {
+                messageDiv.innerHTML = `<small class="text-danger"><i class="bi bi-exclamation-triangle me-1"></i>${data.error}</small>`;
+            }
+        })
+        .catch(error => {
+            console.error('Upload fetch error:', error);
+            progressContainer.style.display = 'none';
+            messageDiv.innerHTML = `<small class="text-danger"><i class="bi bi-exclamation-triangle me-1"></i>Upload error: ${error.message}</small>`;
+        });
+        
+        // Fake progress (since fetch doesn't have real progress events)
+        let progress = 0;
+        const progressInterval = setInterval(() => {
+            progress += Math.random() * 30;
+            if (progress > 90) progress = 90;
+            progressBar.style.width = progress + '%';
+        }, 200);
+        
+        // End progress when upload is done
+        setTimeout(() => {
+            clearInterval(progressInterval);
+            progressBar.style.width = '100%';
+        }, 1000);
+    }
+    
+    // Remove profile image
+    function removeProfileImage() {
+        document.getElementById('photo').value = '';
+        document.getElementById('photo_file').value = '';
+        document.getElementById('uploadMessage').innerHTML = '';
+        updateImagePreview();
+    }
+    
+    // Update image preview
+    function updateImagePreview() {
+        const photoUrl = document.getElementById('photo').value;
+        const avatarPreview = document.getElementById('avatarPreview');
+        const removeBtn = document.getElementById('removeImageBtn');
+        
+        if (photoUrl && photoUrl.trim() !== '') {
+            // Check if URL is absolute or relative path
+            let imageUrl = photoUrl;
+            if (!photoUrl.startsWith('http://') && !photoUrl.startsWith('https://') && !photoUrl.startsWith('data:')) {
+                // Relative path - use as relative path
+                imageUrl = photoUrl;
+            }
+            
+            // Show URL image
+            avatarPreview.style.backgroundImage = `url(${imageUrl})`;
+            avatarPreview.style.backgroundSize = 'cover';
+            avatarPreview.style.backgroundPosition = 'center';
+            avatarPreview.innerHTML = '';
+            removeBtn.style.display = 'inline-block';
+        } else {
+            // Show initials
+            avatarPreview.style.backgroundImage = 'none';
+            avatarPreview.innerHTML = '<i class="bi bi-person"></i>';
+            removeBtn.style.display = 'none';
+        }
+    }
+    
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        updateImagePreview();
+        
+        // Update preview when URL field changes
+        document.getElementById('photo').addEventListener('input', updateImagePreview);
+        
+        // Drag & Drop for image upload
+        const fileInput = document.getElementById('photo_file');
+        const imagePreview = document.getElementById('imagePreview');
+        
+        // Drag Over
+        imagePreview.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            this.style.backgroundColor = 'rgba(102, 126, 234, 0.1)';
+            this.style.border = '2px dashed #667eea';
+        });
+        
+        // Drag Leave
+        imagePreview.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            this.style.backgroundColor = '';
+            this.style.border = '';
+        });
+        
+        // Drop
+        imagePreview.addEventListener('drop', function(e) {
+            e.preventDefault();
+            this.style.backgroundColor = '';
+            this.style.border = '';
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                const file = files[0];
+                if (file.type.startsWith('image/')) {
+                    fileInput.files = files;
+                    uploadProfileImage(fileInput);
+                }
+            }
+        });
+    });
+    </script>
 </body>
 </html>

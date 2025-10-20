@@ -519,6 +519,12 @@ class Router {
             exit;
         }
         
+        // Block private users from accessing company dashboard
+        if (isset($_SESSION['is_private_profile']) && $_SESSION['is_private_profile']) {
+            header('Location: /edit-profile.php');
+            exit;
+        }
+        
         // Handle dashboard sub-routes
         if (isset($this->segments[1])) {
             switch ($this->segments[1]) {

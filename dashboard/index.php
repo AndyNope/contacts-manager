@@ -4,8 +4,20 @@
  * Main dashboard for company administrators
  */
 
-// Ensure user is authenticated as company admin
-if (!isset($_SESSION['user_id']) || !isset($_SESSION['company_id']) || $_SESSION['user_role'] !== 'admin') {
+// Strict access control - only company admins allowed
+if (!isset($_SESSION['user_id']) || 
+    !isset($_SESSION['company_id']) || 
+    !isset($_SESSION['user_role']) || 
+    $_SESSION['user_role'] !== 'admin' ||
+    (isset($_SESSION['is_private_profile']) && $_SESSION['is_private_profile'])) {
+    
+    // Redirect private users to their profile
+    if (isset($_SESSION['is_private_profile']) && $_SESSION['is_private_profile']) {
+        header('Location: /edit-profile.php');
+        exit;
+    }
+    
+    // Redirect others to company login
     header('Location: /company-login');
     exit;
 }

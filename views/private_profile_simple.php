@@ -84,8 +84,13 @@ $profileUrl = '/private/' . $contactId;
                 <div class="profile-card p-4 p-md-5">
                     <!-- Header -->
                     <div class="text-center mb-4">
-                        <div class="avatar-circle">
-                            <?= strtoupper(substr($contactName, 0, 1)) ?>
+                        <div class="avatar-circle" 
+                             <?php if (!empty($contact['photo'])): ?>
+                                 style="background-image: url('<?= htmlspecialchars($contact['photo']) ?>'); background-size: cover; background-position: center; font-size: 0;"
+                             <?php endif; ?>>
+                            <?php if (empty($contact['photo'])): ?>
+                                <?= strtoupper(substr($contactName, 0, 1)) ?>
+                            <?php endif; ?>
                         </div>
                         <h1 class="h2 mb-2"><?= htmlspecialchars($contactName) ?></h1>
                         <?php if ($contact['position'] ?? $jobTitle): ?>
