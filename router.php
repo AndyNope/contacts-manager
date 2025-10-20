@@ -67,6 +67,24 @@ class Router {
             return;
         }
         
+        // Edit profile route
+        if ($this->segments[0] === 'edit-profile') {
+            include 'edit-profile.php';
+            return;
+        }
+        
+        // Company admin dashboard routes
+        if ($this->segments[0] === 'dashboard') {
+            $this->handleCompanyDashboard();
+            return;
+        }
+        
+        // Company admin login route
+        if ($this->segments[0] === 'company-login') {
+            $this->showCompanyLogin();
+            return;
+        }
+        
         // Subscription routes
         if ($this->segments[0] === 'subscribe') {
             $this->showSubscribe();
@@ -95,14 +113,37 @@ class Router {
             return;
         }
         
-        // Private profile routes: /private/{contact-id} or /private/{slug}
-        if ($this->segments[0] === 'private' && isset($this->segments[1])) {
+        // Private profile routes
+        if ($this->segments[0] === 'private') {
+            if (!isset($this->segments[1])) {
+                // Handle /private without UUID - redirect to user's private profile if logged in
+                if (isset($_SESSION['user_id']) && isset($_SESSION['is_private_profile']) && $_SESSION['is_private_profile']) {
+                    // Get user's UUID from their contact record
+                    $userUUID = $this->getUserUUIDById($_SESSION['user_id']);
+                    if ($userUUID) {
+                        header('Location: /private/' . $userUUID, true, 302);
+                    } else {
+                        header('Location: /login', true, 302);
+                    }
+                    exit;
+                } else {
+                    // Not a private profile user or not logged in
+                    header('Location: /login', true, 302);
+                    exit;
+                }
+            }
+            
             $identifier = $this->segments[1];
             
-            // Support both numeric IDs and slugs
-            if (is_numeric($identifier)) {
-                $this->showPrivateProfileById($identifier);
+            // Check if identifier looks like a UUID (with hyphens) or old numeric ID or slug
+            if (preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $identifier)) {
+                // UUID format
+                $this->showPrivateProfileByUUID($identifier);
+            } elseif (is_numeric($identifier)) {
+                // Legacy numeric ID - redirect to UUID
+                $this->redirectToUUIDProfile($identifier);
             } else {
+                // Username slug
                 $this->showPrivateProfileBySlug($identifier);
             }
             return;
@@ -111,8 +152,15 @@ class Router {
         // Legacy support: /private/profile/:username (redirect to new format)
         if (count($this->segments) === 3 && $this->segments[0] === 'private' && $this->segments[1] === 'profile') {
             $userSlug = $this->segments[2];
-            // Redirect to new format
-            header('Location: /private/' . $userSlug, true, 301);
+            
+            // Find user ID by profile_slug to redirect to /private/{id}
+            $userId = $this->getUserIdByProfileSlug($userSlug);
+            if ($userId) {
+                header('Location: /private/' . $userId, true, 301);
+            } else {
+                // If not found by profile_slug, try regular slug redirect
+                header('Location: /private/' . $userSlug, true, 301);
+            }
             exit;
         }
         
@@ -173,7 +221,7 @@ class Router {
             return null;
         }
         
-        // Get contact with this slug in private company
+        // Try to find contact by slug in contacts table first
         $stmt = $this->db->prepare("
             SELECT c.*, u.first_name as creator_first_name, u.last_name as creator_last_name 
             FROM contacts c 
@@ -181,7 +229,34 @@ class Router {
             WHERE c.company_id = ? AND c.slug = ?
         ");
         $stmt->execute([$privateCompany['id'], $userSlug]);
-        return $stmt->fetch(PDO::FETCH_ASSOC);
+        $contact = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        // If not found by contact slug, try by user profile_slug
+        if (!$contact) {
+            $stmt = $this->db->prepare("
+                SELECT c.*, u.first_name as creator_first_name, u.last_name as creator_last_name 
+                FROM contacts c 
+                LEFT JOIN users u ON c.created_by = u.id 
+                WHERE c.company_id = ? AND u.profile_slug = ?
+            ");
+            $stmt->execute([$privateCompany['id'], $userSlug]);
+            $contact = $stmt->fetch(PDO::FETCH_ASSOC);
+        }
+        
+        return $contact;
+    }
+    
+    private function getUserIdByProfileSlug($profileSlug) {
+        // Find user ID by profile_slug for legacy URL redirects
+        $stmt = $this->db->prepare("
+            SELECT u.id 
+            FROM users u 
+            LEFT JOIN companies c ON u.company_id = c.id 
+            WHERE u.profile_slug = ? AND (u.is_private_profile = 1 OR c.slug = 'private')
+        ");
+        $stmt->execute([$profileSlug]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $result ? $result['id'] : null;
     }
     
     private function getPrivateProfileById($contactId) {
@@ -207,6 +282,48 @@ class Router {
     
     private function getPrivateProfileBySlug($userSlug) {
         return $this->getPrivateProfile($userSlug);
+    }
+    
+    private function getPrivateProfileByUUID($uuid) {
+        // Get private company
+        $stmt = $this->db->prepare("SELECT id FROM companies WHERE slug = 'private'");
+        $stmt->execute();
+        $privateCompany = $stmt->fetch();
+        
+        if (!$privateCompany) {
+            return null;
+        }
+        
+        // Get contact by UUID in private company
+        $stmt = $this->db->prepare("
+            SELECT c.*, u.first_name as creator_first_name, u.last_name as creator_last_name 
+            FROM contacts c 
+            LEFT JOIN users u ON c.created_by = u.id 
+            WHERE c.company_id = ? AND c.uuid = ? AND c.is_public = TRUE
+        ");
+        $stmt->execute([$privateCompany['id'], $uuid]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+    
+    private function getUserUUIDById($userId) {
+        // Get private company
+        $stmt = $this->db->prepare("SELECT id FROM companies WHERE slug = 'private'");
+        $stmt->execute();
+        $privateCompany = $stmt->fetch();
+        
+        if (!$privateCompany) {
+            return null;
+        }
+        
+        // Get UUID for user's contact record
+        $stmt = $this->db->prepare("
+            SELECT uuid FROM contacts 
+            WHERE company_id = ? AND created_by = ? 
+            LIMIT 1
+        ");
+        $stmt->execute([$privateCompany['id'], $userId]);
+        $result = $stmt->fetch();
+        return $result ? $result['uuid'] : null;
     }
     
     private function showHomepage() {
@@ -324,6 +441,30 @@ class Router {
         $this->renderPrivateProfile($contact);
     }
     
+    private function showPrivateProfileByUUID($uuid) {
+        $contact = $this->getPrivateProfileByUUID($uuid);
+        
+        if (!$contact) {
+            $this->show404();
+            return;
+        }
+        
+        $this->renderPrivateProfile($contact);
+    }
+    
+    private function redirectToUUIDProfile($contactId) {
+        // Get UUID for the numeric contact ID and redirect
+        $contact = $this->getPrivateProfileById($contactId);
+        
+        if (!$contact || !$contact['uuid']) {
+            $this->show404();
+            return;
+        }
+        
+        header('Location: /private/' . $contact['uuid'], true, 301);
+        exit;
+    }
+    
     private function renderPrivateProfile($contact) {
         // For private profiles, set a minimal company context
         $_SESSION['current_company'] = [
@@ -345,7 +486,7 @@ class Router {
         }
         
         // Include private profile view
-        include 'views/private_profile.php';
+        include 'views/private_profile_simple.php';
     }
     
     private function showAdminLogin() {
@@ -359,6 +500,88 @@ class Router {
             exit;
         }
         include 'admin/dashboard.php';
+    }
+    
+    private function showCompanyLogin() {
+        include 'company-login.php';
+    }
+    
+    private function handleCompanyDashboard() {
+        // Check if user is logged in as company admin
+        if (!isset($_SESSION['user_id']) || !isset($_SESSION['company_id'])) {
+            header('Location: /company-login');
+            exit;
+        }
+        
+        // Check if user has admin role for their company
+        if (!isset($_SESSION['user_role']) || $_SESSION['user_role'] !== 'admin') {
+            header('Location: /company-login?error=insufficient_permissions');
+            exit;
+        }
+        
+        // Handle dashboard sub-routes
+        if (isset($this->segments[1])) {
+            switch ($this->segments[1]) {
+                case 'contacts':
+                    if (isset($this->segments[2])) {
+                        switch ($this->segments[2]) {
+                            case 'add':
+                                $this->showAddContact();
+                                return;
+                            case 'edit':
+                                if (isset($this->segments[3])) {
+                                    $this->showEditContact($this->segments[3]);
+                                } else {
+                                    $this->show404();
+                                }
+                                return;
+                            case 'delete':
+                                if (isset($this->segments[3])) {
+                                    $this->handleDeleteContact($this->segments[3]);
+                                } else {
+                                    $this->show404();
+                                }
+                                return;
+                            default:
+                                $this->showContactsList();
+                        }
+                    } else {
+                        $this->showContactsList();
+                    }
+                    return;
+                case 'settings':
+                    $this->showCompanySettings();
+                    return;
+                default:
+                    $this->showDashboardHome();
+            }
+        } else {
+            $this->showDashboardHome();
+        }
+    }
+    
+    private function showDashboardHome() {
+        include 'dashboard/index.php';
+    }
+    
+    private function showContactsList() {
+        include 'dashboard/contacts.php';
+    }
+    
+    private function showAddContact() {
+        include 'dashboard/add-contact.php';
+    }
+    
+    private function showEditContact($contactId) {
+        include 'dashboard/edit-contact.php';
+    }
+    
+    private function handleDeleteContact($contactId) {
+        include 'dashboard/delete-contact.php';
+    }
+    
+    private function showCompanySettings() {
+        include 'dashboard/settings.php';
     }
     
     private function handleApiRoute() {

@@ -1,1 +1,49 @@
+# macOS
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# PHP
+*.log
+*.tmp
+.env
+.env.local
+
+# Development & Debug files
+debug_*.php
+test_*.php
+simple_test.php
+security_test.php
+*_debug.php
+temp_*.php
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Backup files
+*.bak
+*.backup
+*.old
+
+# Migration files (remove after running)
+migrate_*.php
+
+# Upload directories (if any)
+uploads/*
+!uploads/.gitkeep
+
+# Cache directories
+cache/
+tmp/
+
+# Configuration files with sensitive data (if any)
+config/local.php
+config/production.php

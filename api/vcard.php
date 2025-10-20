@@ -150,14 +150,22 @@ function generateVCard($contact) {
     }
     
     // Profile URL
-    if (!empty($contact['company_slug']) && !empty($contact['slug'])) {
-        $baseUrl = (isset($_SERVER['HTTPS']) ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'];
+    $baseUrl = (isset($_SERVER['HTTPS']) ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'];
+    
+    if (!empty($contact['company_slug'])) {
         if ($contact['company_slug'] === 'private') {
-            $profileUrl = $baseUrl . '/private/profile/' . $contact['slug'];
-        } else {
+            // For private profiles, use UUID-based URL for security
+            if (!empty($contact['uuid'])) {
+                $profileUrl = $baseUrl . '/private/' . $contact['uuid'];
+            }
+        } else if (!empty($contact['slug'])) {
+            // For company profiles, use the existing format: /{company_slug}/profile/{contact_slug}
             $profileUrl = $baseUrl . '/' . $contact['company_slug'] . '/profile/' . $contact['slug'];
         }
-        $vcard .= "URL;TYPE=PROFILE:" . escapeVCardValue($profileUrl) . "\r\n";
+        
+        if (isset($profileUrl)) {
+            $vcard .= "URL;TYPE=PROFILE:" . escapeVCardValue($profileUrl) . "\r\n";
+        }
     }
     
     // Photo URL (if available)

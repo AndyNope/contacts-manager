@@ -1,6 +1,8 @@
 <?php
 // Include helper functions
-if (file_exists('../includes/private_profile_helpers.php')) {
+if (file_exists('includes/private_profile_helpers.php')) {
+    include_once 'includes/private_profile_helpers.php';
+} elseif (file_exists('../includes/private_profile_helpers.php')) {
     include_once '../includes/private_profile_helpers.php';
 }
 
@@ -227,12 +229,18 @@ $profileUrl = generatePrivateProfileUrl($contact);
                 
                 <!-- Action Buttons -->
                 <div class="mt-8 pt-6 border-t border-gray-200 dark:border-gray-600">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <a href="/api/vcard?contact=<?= $contact['id'] ?>" 
                            class="flex items-center justify-center px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors">
                             <i class="fas fa-download mr-2"></i>
                             Save Contact
                         </a>
+                        
+                        <button onclick="showQRCode()" 
+                                class="flex items-center justify-center px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                            <i class="fas fa-qrcode mr-2"></i>
+                            QR Code
+                        </button>
                         
                         <button onclick="shareProfile()" 
                                 class="flex items-center justify-center px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
@@ -264,6 +272,41 @@ $profileUrl = generatePrivateProfileUrl($contact);
             </p>
         </div>
     </div>
+
+    <!-- QR Code Modal -->
+    <div id="qrModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">QR Code</h3>
+                <button onclick="closeQRCode()" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="text-center">
+                <div id="qrCodeContainer" class="mb-4">
+                    <!-- QR code will be loaded here -->
+                </div>
+                
+                <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                    Scan this QR code to quickly access this profile
+                </p>
+                
+                <div class="flex gap-2 justify-center">
+                    <a id="downloadQR" href="#" download="qr-code.png" 
+                       class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors">
+                        <i class="fas fa-download mr-1"></i>
+                        Download
+                    </a>
+                    <button onclick="copyQRLink()" 
+                            class="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors">
+                        <i class="fas fa-copy mr-1"></i>
+                        Copy Link
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
     
     <script>
         function shareProfile() {
@@ -280,6 +323,60 @@ $profileUrl = generatePrivateProfileUrl($contact);
                 });
             }
         }
+        
+        function showQRCode() {
+            const modal = document.getElementById('qrModal');
+            const container = document.getElementById('qrCodeContainer');
+            const downloadLink = document.getElementById('downloadQR');
+            
+            // Show loading
+            container.innerHTML = '<div class="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto"></div>';
+            modal.classList.remove('hidden');
+            
+            // Generate QR code
+            const contactId = <?= $contact['id'] ?>;
+            const qrImageUrl = `/api/qr-code.php?contact=${contactId}&format=image&size=200`;
+            const qrDownloadUrl = `/api/qr-code.php?contact=${contactId}&format=download&size=300`;
+            
+            // Load QR code image
+            const img = new Image();
+            img.onload = function() {
+                container.innerHTML = '';
+                img.className = 'mx-auto border rounded';
+                container.appendChild(img);
+                downloadLink.href = qrDownloadUrl;
+            };
+            img.onerror = function() {
+                container.innerHTML = '<p class="text-red-500">Failed to generate QR code</p>';
+            };
+            img.src = qrImageUrl;
+        }
+        
+        function closeQRCode() {
+            document.getElementById('qrModal').classList.add('hidden');
+        }
+        
+        function copyQRLink() {
+            navigator.clipboard.writeText(window.location.href).then(() => {
+                alert('Profile link copied to clipboard!');
+            }).catch(() => {
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = window.location.href;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                alert('Profile link copied to clipboard!');
+            });
+        }
+        
+        // Close modal when clicking outside
+        document.getElementById('qrModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeQRCode();
+            }
+        });
         
         // Dark mode detection
         if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {

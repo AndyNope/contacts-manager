@@ -1,294 +1,206 @@
 # EasyContact - Professional Contact Management Platform
 
-Ein modernes, multi-tenant SaaS-System für professionelle Kontaktverwaltung mit PayPal-Integration und privaten Profilen.
+A modern, secure contact management system with multi-tenant architecture, featuring both private profiles and company team management.
 
 ## 🚀 Features
 
-### ✨ **Kern-Funktionalitäten**
-- **Multi-Tenant-Architektur** - Jedes Unternehmen hat seine eigene Instanz
-- **Private Profile** - Sichere persönliche Profile unter `/private/profile/username`
-- **Unternehmensprofile** - Branded Company Pages unter `/company-name`
-- **PayPal-Integration** - Automatische Subscription-Verwaltung
-- **Responsive Design** - Mobile-first mit Dark/Light Mode
-- **Analytics & Tracking** - Detaillierte Profil-Statistiken
+### ✨ **Core Functionality**
+- **Multi-Tenant Architecture** - Each company has its own instance
+- **Private Profiles** - Secure personal profiles with UUID-based URLs
+- **Company Profiles** - Branded company pages with team management
+- **Admin Dashboard** - Complete contact management interface
+- **PayPal Integration** - Automated subscription management
+- **Responsive Design** - Mobile-first with dark/light mode support
+- **QR Code Generation** - Instant contact sharing
+- **vCard Export** - Standard contact format downloads
 
-### 🔒 **Sicherheit & Datenschutz**
-- **Sichere Authentifizierung** - Password-Hashing mit PHP
-- **Private Profile-URLs** - Nur über direkten Link zugänglich
-- **GDPR-konform** - Privacy Policy und Terms of Service
-- **Webhook-Verifizierung** - Sichere PayPal-Kommunikation
+### 🔒 **Security & Privacy**
+- **UUID-based URLs** - Cryptographically secure private profile URLs
+- **Role-based Access Control** - Admin/user permissions
+- **Secure Authentication** - Password hashing with PHP
+- **Privacy Protection** - GDPR-compliant design
+- **Access Control** - Company-specific data isolation
 
-### 💳 **Subscription-Pläne**
-- **Free Plan** - Private Profile, 1 Kontakt
-- **Basic Plan** - €9.99/Monat, 50 Kontakte, Company Branding
-- **Premium Plan** - €29.99/Monat, Unlimited Kontakte, Advanced Features
+### � **Business Features**
+- **Subscription Management** - Free, Basic, and Premium plans
+- **Contact Analytics** - Profile views and engagement tracking
+- **Bulk Operations** - Efficient team member management
+- **Public/Private Toggle** - Granular visibility controls
+- **Featured Contacts** - Highlight key team members
 
-## 🛠 Installation & Setup
+## 🛠️ Installation
 
-### Systemanforderungen
-- PHP 7.4+ mit PDO MySQL
-- MySQL/MariaDB 5.7+
-- Apache/Nginx mit mod_rewrite
-- PayPal Developer Account
+### Prerequisites
+- PHP 8.0+
+- MySQL 5.7+ or MariaDB
+- Apache with mod_rewrite enabled
+- Web hosting with PHP support
 
-### 1. Repository klonen
-```bash
-git clone https://github.com/AndyNope/contacts-manager.git
-cd contacts-manager
-```
+### 1. Database Setup
 
-### 2. Datenbank einrichten
 ```sql
--- Datenbank erstellen
+-- Create database and user
 CREATE DATABASE easycontact;
-
--- Benutzer erstellen
 CREATE USER 'easycontact'@'localhost' IDENTIFIED BY 'EzC0nt@ct2025!';
 GRANT ALL PRIVILEGES ON easycontact.* TO 'easycontact'@'localhost';
 FLUSH PRIVILEGES;
-
--- Schema importieren
 mysql -u easycontact -p easycontact < database/schema.sql
 mysql -u easycontact -p easycontact < setup_private_profiles.sql
 ```
 
-### 3. PayPal-Integration konfigurieren
+### 2. Import Database Schema
 
-#### PayPal Subscription Plans erstellen:
 ```bash
-php setup_paypal_db.php
+mysql -u easycontact -p easycontact < database_schema.sql
 ```
 
-#### PayPal Webhook einrichten:
-1. **PayPal Developer Dashboard** öffnen: https://developer.paypal.com
-2. **Deine App auswählen**
-3. **"Webhooks" → "Add Webhook"**
-4. **Webhook URL**: `https://deine-domain.com/api/paypal_webhook.php`
-5. **Events auswählen**:
-   - `BILLING.SUBSCRIPTION.CREATED`
-   - `BILLING.SUBSCRIPTION.ACTIVATED`
-   - `BILLING.SUBSCRIPTION.CANCELLED`
-   - `BILLING.SUBSCRIPTION.SUSPENDED`
-   - `BILLING.SUBSCRIPTION.EXPIRED`
-   - `PAYMENT.SALE.COMPLETED`
-6. **Webhook-ID** in `config/paypal.php` eintragen
+### 3. Run UUID Migration (First Time Only)
 
-### 4. Web Server konfigurieren
+Access `https://yoursite.com/migrate_add_uuid.php` to add UUID security to existing installations. **Delete this file after running.**
 
-#### Apache (.htaccess bereits vorhanden):
-```apache
-RewriteEngine On
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^(.*)$ router.php [QSA,L]
-```
+### 4. Configure Web Server
 
-#### Nginx:
-```nginx
-location / {
-    try_files $uri $uri/ /router.php?$query_string;
-}
-```
+Ensure `.htaccess` is enabled and mod_rewrite is active. The included `.htaccess` file handles all URL routing.
 
-## 🔧 Konfiguration
+## 🌐 URL Structure
 
-### Datenbank-Verbindung
-Die Datenbankverbindung ist bereits in allen Dateien konfiguriert:
-- **Host**: localhost
-- **Database**: easycontact
-- **User**: easycontact
-- **Password**: EzC0nt@ct2025!
-
-### PayPal-Konfiguration
-In `config/paypal.php`:
-- ✅ **Client ID**: Bereits konfiguriert
-- ✅ **Client Secret**: Bereits konfiguriert
-- ✅ **Subscription Plans**: Basic & Premium bereits erstellt
-- ✅ **Webhook ID**: 7TS68256FT808511N (konfiguriert)
-
-## 🌐 URL-Struktur
-
-### Öffentliche Seiten
+### Public Pages
 - `/` - Homepage/Marketing
-- `/login` - Benutzer-Login
-- `/register` - Registrierung
-- `/terms` - Nutzungsbedingungen
-- `/privacy` - Datenschutz
+- `/login` - User login
+- `/register` - Registration
+- `/company-login` - Company admin login
+- `/terms` - Terms of Service
+- `/privacy` - Privacy Policy
 
-### Private Profile (Free Plan)
-- `/private/profile/john-doe` - Private Benutzerprofile
-- Sicher, nur über direkten Link zugänglich
-- Ideal für Freelancer und Einzelpersonen
+### Private Profiles (Free Plan)
+- `/private/[uuid]` - Secure private user profiles
+- Example: `/private/f566aa33-2186-4430-9f12-436adaeff8bf`
 
-### Unternehmensprofile (Basic/Premium)
-- `/company-name` - Unternehmens-Kontaktliste
-- `/company-name/profile/contact-name` - Einzelkontakt
-- Company Branding und Custom Design
+### Company Profiles (Basic/Premium)
+- `/[company-slug]` - Company contact listing
+- `/[company-slug]/profile/[contact-slug]` - Individual contact
+- `/dashboard` - Company admin dashboard
 
-### API-Endpunkte
-- `/api/register.php` - Registrierung
-- `/api/login.php` - Authentifizierung
-- `/api/paypal_webhook.php` - PayPal Webhooks
-- `/api/subscription_success.php` - Subscription Bestätigung
+### API Endpoints
+- `/api/register.php` - Registration
+- `/api/login_simple.php` - Authentication  
+- `/api/vcard.php` - vCard downloads
+- `/api/qr-code.php` - QR code generation
+- `/api/paypal_webhook.php` - PayPal webhooks
 
-## 📊 Datenbank-Schema
+## 👥 User Roles & Access
 
-### Haupttabellen
-- **companies** - Unternehmen/Mandanten
-- **users** - Benutzer mit Rollen
-- **contacts** - Kontaktprofile
-- **analytics_events** - Tracking & Analytics
-- **payment_logs** - PayPal-Transaktionen
+### Private Profile Users (Free)
+- Create and manage personal contact profile
+- Secure UUID-based profile URLs
+- QR code and vCard generation
+- Profile editing capabilities
 
-### Private Profile Schema
-```sql
--- Zusätzliche Spalten für Private Profile
-ALTER TABLE users ADD COLUMN is_private_profile TINYINT(1) DEFAULT 0;
-ALTER TABLE users ADD COLUMN profile_slug VARCHAR(255) NULL;
-ALTER TABLE contacts ADD COLUMN slug VARCHAR(255) NULL;
-ALTER TABLE contacts ADD COLUMN profile_views INT DEFAULT 0;
-```
+### Company Admins (Basic/Premium)
+- Full company dashboard access
+- Add/edit/delete team members
+- Manage company settings
+- Bulk operations on contacts
+- View analytics and statistics
 
-## 🔄 Deployment
+### Public Users
+- View public company pages
+- Access individual contact profiles
+- Download vCards and view QR codes
 
-### Produktionsumgebung
-1. **PayPal auf Live umstellen**:
-   ```php
-   // In config/paypal.php
-   public $mode = 'live';
-   public $baseUrl = 'https://api-m.paypal.com';
-   ```
+## � Security Features
 
-2. **SSL-Zertifikat** installieren (erforderlich für PayPal)
+### UUID-Based Private Profiles
+- **Before**: `/private/3` (enumerable, predictable)
+- **After**: `/private/f566aa33-2186-4430-9f12-436adaeff8bf` (cryptographically secure)
+- Automatic migration from old ID-based URLs
+- Backward compatibility with legacy links
 
-3. **Webhook-URL** auf Live-Domain aktualisieren
+### Access Controls
+- Company data isolation
+- Role-based permissions
+- Session management
+- Secure password hashing
 
-4. **Error Logging** konfigurieren:
-   ```php
-   // Webhook-Debugging in Produktion deaktivieren
-   // error_log('PayPal Webhook received: ' . $webhook_payload);
-   ```
+## 💳 Subscription Plans
 
-## 🧪 Testing
+| Feature | Free | Basic | Premium |
+|---------|------|-------|---------|
+| Private Profile | ✅ | ✅ | ✅ |
+| Company Page | ❌ | ✅ | ✅ |
+| Team Members | 1 | 10 | Unlimited |
+| Custom Branding | ❌ | ❌ | ✅ |
+| Analytics | Basic | Advanced | Full |
+| Support | Community | Email | Priority |
 
-### Lokale Entwicklung
-```bash
-# PHP Development Server
-php -S localhost:8000 router.php
+## � Deployment
 
-# Mit Apache/Nginx testen
-# Stelle sicher, dass mod_rewrite aktiviert ist
-```
+### Production Checklist
+- [ ] Set up SSL certificate (HTTPS required)
+- [ ] Configure database with strong credentials
+- [ ] Update PayPal configuration for live environment
+- [ ] Set proper file permissions (755 for directories, 644 for files)
+- [ ] Remove migration files after running
+- [ ] Test all functionality thoroughly
 
-### PayPal Sandbox Testing
-- Verwende PayPal Sandbox-Accounts für Tests
-- Teste alle Subscription-Flows
-- Prüfe Webhook-Funktionalität mit ngrok
+### Environment Configuration
+Update database credentials in all PHP files:
+- Default credentials are set for development
+- Change `$host`, `$user`, `$pass`, `$dbname` for production
 
-## 🔧 Fehlerbehebung
+## 📱 Mobile Support
 
-### Häufige Probleme
+- Fully responsive design
+- Mobile-optimized navigation
+- Touch-friendly interfaces
+- Progressive Web App features
 
-#### 1. Datenbank-Verbindungsfehler
-```
-Lösung: Prüfe Credentials in allen PHP-Dateien
-Bereits gefixt: Alle Dateien verwenden kontaktverwaltung/Kontakt&Verwaltung
-```
+## 🎨 Customization
 
-#### 2. PayPal Webhook funktioniert nicht
-```
-- Prüfe Webhook-URL in PayPal Dashboard
-- Stelle sicher, dass SSL aktiviert ist
-- Kontrolliere Error-Logs für Details
-```
+### Themes
+- Light/Dark mode toggle
+- CSS custom properties for easy theming
+- Bootstrap 5.3.0 integration
 
-#### 3. Private Profile URLs funktionieren nicht
-```
-- Prüfe mod_rewrite Konfiguration
-- Stelle sicher, dass .htaccess gelesen wird
-- Führe setup_private_profiles.sql aus
-```
+### Branding
+- Company logos and colors
+- Custom domain support (Premium)
+- White-label options
 
-#### 4. Terms/Privacy Links broken
-```
-Bereits gefixt: Links zeigen auf /terms und /privacy
-```
+## 📊 Analytics
 
-## 📁 Dateistruktur
+- Profile view tracking
+- QR code scan metrics
+- User engagement statistics
+- Company dashboard insights
 
-```
-ams/
-├── config/
-│   └── paypal.php              # PayPal-Konfiguration
-├── api/
-│   ├── register.php            # Registrierung + Private Profiles
-│   ├── login.php               # Authentifizierung
-│   ├── paypal_webhook.php      # PayPal Webhook Handler
-│   └── subscription_success.php # Subscription Bestätigung
-├── views/
-│   ├── private_profile.php     # Private Profil-Ansicht
-│   ├── contact_profile.php     # Unternehmens-Kontakt
-│   └── 404.php                 # Fehlerseite
-├── router.php                  # Multi-Tenant URL-Routing
-├── index.php                   # Homepage
-├── login.php                   # Login-Seite
-├── register.php                # Registrierung
-├── setup_paypal_db.php         # PayPal Setup-Script
-└── setup_private_profiles.sql  # Private Profile Schema
-```
+## 🔧 Maintenance
 
-## 🔐 Sicherheitshinweise
+### Regular Tasks
+- Monitor subscription statuses
+- Clean up expired sessions
+- Review security logs
+- Update dependencies
 
-### Produktions-Checklist
-- [ ] SSL-Zertifikat installiert
-- [ ] PayPal Webhook-Signatur-Verifizierung aktiviert
-- [ ] Error-Logs aus Webhook-Handler entfernt
-- [ ] Datenbank-Backups konfiguriert
-- [ ] Rate-Limiting für API-Endpunkte
-- [ ] Security Headers konfiguriert
+### Backup Strategy
+- Database backups (daily recommended)
+- File system backups
+- Configuration backup
 
-### Private Profile Sicherheit
-- URLs sind nur über direkten Link zugänglich
-- Keine öffentliche Auflistung von Private Profiles
-- Sichere Slug-Generierung verhindert Raten
-- Analytics-Tracking für Sicherheitsmonitoring
+## 🤝 Contributing
 
-## 🆘 Support
+This is a commercial project. For support or customization requests, please contact the development team.
 
-### PayPal-Integration
-- **Dokumentation**: https://developer.paypal.com/docs/subscriptions/
-- **Sandbox-Testing**: https://developer.paypal.com/developer/accounts/
-- **Webhook-Guide**: https://developer.paypal.com/docs/api/webhooks/
+## 📄 License
 
-### Entwicklung
-- **Repository**: https://github.com/AndyNope/contacts-manager
-- **Branch**: commercial
-- **Issues**: GitHub Issues für Bug-Reports
+Proprietary software. All rights reserved.
+
+## 📞 Support
+
+- **Technical Issues**: Create an issue in the repository
+- **Business Inquiries**: Contact via company website
+- **Security Concerns**: Report privately to security team
 
 ---
 
-## ✅ Status
-
-### Completed ✅
-- [x] PayPal-Integration mit echten Credentials
-- [x] Private Profile System implementiert
-- [x] Datenbank-Credentials gefixt
-- [x] Terms/Privacy Links gefixt
-- [x] Free Plan wiederhergestellt
-- [x] Multi-Tenant Routing System
-- [x] Webhook Handler erstellt
-- [x] Webhook-ID konfiguriert (7TS68256FT808511N)
-- [x] Registrierung-500-Fehler behoben
-
-### In Progress 🔄
-- [ ] SSL-Zertifikat für Webhook-Testing
-- [ ] Produktions-Deployment
-
-### Planned 📋
-- [ ] Company-Branding für Premium Plans
-- [ ] Advanced Analytics Dashboard
-- [ ] Email-Benachrichtigungen
-- [ ] API-Rate-Limiting
-
-**Last Updated**: 30. Juli 2025
-**Version**: 2.0.0 (Commercial with Private Profiles)
+**EasyContact** - Making professional networking effortless and secure.

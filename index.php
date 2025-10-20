@@ -4,6 +4,7 @@ session_start();
 // Check if user is logged in
 $isLoggedIn = isset($_SESSION['user_id']);
 $currentUser = null;
+$isPrivateProfile = false;
 
 if ($isLoggedIn) {
     $currentUser = [
@@ -13,6 +14,9 @@ if ($isLoggedIn) {
         'company' => $_SESSION['company_name'] ?? '',
         'role' => $_SESSION['user_role'] ?? 'user'
     ];
+    
+    // Check if user has a private profile
+    $isPrivateProfile = isset($_SESSION['is_private_profile']) && $_SESSION['is_private_profile'];
 }
 ?>
 <!DOCTYPE html>
@@ -75,6 +79,28 @@ if ($isLoggedIn) {
             justify-content: center;
             font-weight: bold;
             font-size: 14px;
+        }
+
+        .avatar-large {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: var(--accent-color);
+            color: var(--dark-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 2rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .welcome-back-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
         /* Dark Mode Toggle */
@@ -254,6 +280,24 @@ if ($isLoggedIn) {
                 padding: 6px 12px;
                 font-size: 0.9rem;
             }
+            
+            /* Fix mobile navbar alignment */
+            .navbar-collapse {
+                text-align: right;
+            }
+            
+            .navbar-nav {
+                align-items: flex-end;
+            }
+            
+            .nav-item {
+                text-align: right;
+            }
+            
+            .dropdown-menu {
+                right: 0;
+                left: auto;
+            }
         }
     </style>
 </head>
@@ -293,6 +337,15 @@ if ($isLoggedIn) {
                                 <i class="bi bi-person-plus me-1"></i>Sign Up
                             </a>
                         </li>
+
+                    <!-- Theme toggle button -->
+                    <li class="nav-item ms-3">
+                        <button class="btn theme-toggle" onclick="toggleTheme()" id="themeToggle">
+                            <i class="bi bi-moon-fill" id="themeIcon"></i>
+                            <span id="themeText">Dark</span>
+                        </button>
+                    </li>
+
                     <?php else: ?>
                         <!-- Authenticated Navigation -->
                         <li class="nav-item dropdown">
@@ -315,11 +368,17 @@ if ($isLoggedIn) {
                                     <small class="text-muted"><?= htmlspecialchars($currentUser['email']) ?></small>
                                 </h6></li>
                                 <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="<?= $_SESSION['company_slug'] ? '/' . $_SESSION['company_slug'] : '#' ?>">
-                                    <i class="bi bi-speedometer2 me-2"></i>Dashboard
-                                </a></li>
-                                <li><a class="dropdown-item" href="/profile">
-                                    <i class="bi bi-person-circle me-2"></i>My Profile
+                                <?php if (isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'admin'): ?>
+                                    <li><a class="dropdown-item" href="/dashboard">
+                                        <i class="bi bi-speedometer2 me-2"></i>Admin Dashboard
+                                    </a></li>
+                                <?php elseif ($_SESSION['company_slug']): ?>
+                                    <li><a class="dropdown-item" href="/<?= $_SESSION['company_slug'] ?>">
+                                        <i class="bi bi-speedometer2 me-2"></i>Company Page
+                                    </a></li>
+                                <?php endif; ?>
+                                <li><a class="dropdown-item" href="<?= $isPrivateProfile ? '/edit-profile' : '/profile' ?>">
+                                    <i class="bi bi-<?= $isPrivateProfile ? 'pencil-square' : 'person-circle' ?> me-2"></i><?= $isPrivateProfile ? 'Edit Profile' : 'My Profile' ?>
                                 </a></li>
                                 <li><a class="dropdown-item" href="/settings">
                                     <i class="bi bi-gear me-2"></i>Settings
@@ -331,19 +390,6 @@ if ($isLoggedIn) {
                             </ul>
                         </li>
                     <?php endif; ?>
-                    
-                    <li class="nav-item ms-3">
-                        <button class="btn theme-toggle" onclick="toggleTheme()" id="themeToggle">
-                            <i class="bi bi-moon-fill" id="themeIcon"></i>
-                            <span id="themeText">Dark</span>
-                        </button>
-                    </li>
-                    <li class="nav-item ms-2">
-                        <a class="btn btn-outline-light" href="login">Sign In</a>
-                    </li>
-                    <li class="nav-item ms-2">
-                        <a class="btn cta-button text-dark" href="register">Get Started</a>
-                    </li>
                 </ul>
             </div>
         </div>
@@ -352,16 +398,58 @@ if ($isLoggedIn) {
     <!-- Hero Section -->
     <section class="hero">
         <div class="container">
-            <h1>Professional Digital Business Cards</h1>
-            <p class="lead">Create stunning digital business cards with QR codes, custom branding, and powerful analytics. Perfect for modern professionals and teams.</p>
-            <div class="d-flex justify-content-center gap-3 flex-wrap">
-                <a href="register" class="btn cta-button text-dark">
-                    <i class="bi bi-rocket-takeoff me-2"></i>Start Free Trial
-                </a>
-                <a href="#features" class="btn btn-outline-light">
-                    <i class="bi bi-play-circle me-2"></i>Learn More
-                </a>
-            </div>
+            <?php if ($isLoggedIn): ?>
+                <!-- Personalized Hero for Logged In Users -->
+                <div class="row align-items-center">
+                    <div class="col-lg-8 mx-auto text-center">
+                        <div class="welcome-back-card">
+                            <div class="d-flex align-items-center justify-content-center mb-4">
+                                <div class="avatar-large me-3">
+                                    <?= strtoupper(substr($currentUser['name'], 0, 1)) ?>
+                                </div>
+                                <div class="text-start">
+                                    <h1 class="mb-1">Welcome back, <?= htmlspecialchars(explode(' ', $currentUser['name'])[0]) ?>!</h1>
+                                    <p class="lead mb-1"><?= htmlspecialchars($currentUser['company'] ?: 'Private Profile') ?></p>
+                                    <?php if (isset($_SESSION['subscription_status'])): ?>
+                                        <span class="badge bg-success">
+                                            <i class="bi bi-check-circle me-1"></i><?= ucfirst($_SESSION['subscription_status']) ?> Plan
+                                        </span>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                            
+                            <p class="lead mb-4">Ready to manage your contacts and grow your network?</p>
+                            
+                            <div class="d-flex justify-content-center gap-3 flex-wrap">
+                                <a href="<?= $_SESSION['company_slug'] ? '/' . $_SESSION['company_slug'] : '/dashboard' ?>" class="btn cta-button text-dark">
+                                    <i class="bi bi-speedometer2 me-2"></i>Go to Dashboard
+                                </a>
+                                <?php if ($_SESSION['company_slug']): ?>
+                                    <a href="/<?= $_SESSION['company_slug'] ?>" class="btn btn-outline-light">
+                                        <i class="bi bi-building me-2"></i>View My Company
+                                    </a>
+                                <?php else: ?>
+                                    <a href="/private/<?= $_SESSION['user_id'] ?>" class="btn btn-outline-light">
+                                        <i class="bi bi-person-circle me-2"></i>View My Profile
+                                    </a>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            <?php else: ?>
+                <!-- Default Hero for Guests -->
+                <h1>Professional Digital Business Cards</h1>
+                <p class="lead">Create stunning digital business cards with QR codes, custom branding, and powerful analytics. Perfect for modern professionals and teams.</p>
+                <div class="d-flex justify-content-center gap-3 flex-wrap">
+                    <a href="register" class="btn cta-button text-dark">
+                        <i class="bi bi-rocket-takeoff me-2"></i>Start Free Trial
+                    </a>
+                    <a href="#features" class="btn btn-outline-light">
+                        <i class="bi bi-play-circle me-2"></i>Learn More
+                    </a>
+                </div>
+            <?php endif; ?>
         </div>
     </section>
 
@@ -512,11 +600,28 @@ if ($isLoggedIn) {
     <!-- CTA Section -->
     <section class="py-5" style="background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));">
         <div class="container text-center text-white">
-            <h2 class="display-5 fw-bold mb-3">Ready to Get Started?</h2>
-            <p class="lead mb-4">Join thousands of professionals using EasyContact for their digital business cards</p>
-            <a href="subscribe.php" class="btn cta-button text-dark btn-lg">
-                <i class="bi bi-rocket-takeoff me-2"></i>Start Your Subscription
-            </a>
+            <?php if ($isLoggedIn): ?>
+                <!-- Personalized CTA for Logged In Users -->
+                <h2 class="display-5 fw-bold mb-3">Keep Growing Your Network!</h2>
+                <p class="lead mb-4">You're part of the EasyContact community. Make the most of your digital presence.</p>
+                <div class="d-flex justify-content-center gap-3 flex-wrap">
+                    <a href="<?= $_SESSION['company_slug'] ? '/' . $_SESSION['company_slug'] : '/dashboard' ?>" class="btn cta-button text-dark btn-lg">
+                        <i class="bi bi-speedometer2 me-2"></i>My Dashboard
+                    </a>
+                    <?php if (isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'admin'): ?>
+                        <a href="/settings" class="btn btn-outline-light btn-lg">
+                            <i class="bi bi-gear me-2"></i>Account Settings
+                        </a>
+                    <?php endif; ?>
+                </div>
+            <?php else: ?>
+                <!-- Default CTA for Guests -->
+                <h2 class="display-5 fw-bold mb-3">Ready to Get Started?</h2>
+                <p class="lead mb-4">Join thousands of professionals using EasyContact for their digital business cards</p>
+                <a href="subscribe.php" class="btn cta-button text-dark btn-lg">
+                    <i class="bi bi-rocket-takeoff me-2"></i>Start Your Subscription
+                </a>
+            <?php endif; ?>
         </div>
     </section>
 
@@ -583,6 +688,7 @@ if ($isLoggedIn) {
             <div class="row align-items-center">
                 <div class="col-md-6">
                     <p class="text-muted mb-0">&copy; 2025 EasyContact. All rights reserved.</p>
+                    <small class="text-muted">Company admins: <a href="/company-login" class="text-decoration-none">Access your dashboard</a></small>
                 </div>
                 <div class="col-md-6 text-md-end">
                     <p class="text-muted mb-0">Made with ❤️ for professionals worldwide</p>

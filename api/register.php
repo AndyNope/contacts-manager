@@ -204,23 +204,33 @@ try {
     ]);
     $userId = $pdo->lastInsertId();
     
+    // Generate UUID for contact
+    $uuid = sprintf(
+        '%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
+        mt_rand(0, 0xffff), mt_rand(0, 0xffff),
+        mt_rand(0, 0xffff),
+        mt_rand(0, 0x0fff) | 0x4000,
+        mt_rand(0, 0x3fff) | 0x8000,
+        mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff)
+    );
+    
     // Create initial contact profile for the user
     if ($isPrivateProfile) {
-        // For private profiles, create contact with user slug
+        // For private profiles, create contact with user slug and UUID
         $stmt = $pdo->prepare("
             INSERT INTO contacts 
-            (company_id, first_name, last_name, email, position, slug, created_by, created_at, updated_at) 
-            VALUES (?, ?, ?, ?, 'Private Profile', ?, ?, NOW(), NOW())
+            (company_id, first_name, last_name, email, position, slug, uuid, created_by, created_at, updated_at) 
+            VALUES (?, ?, ?, ?, 'Private Profile', ?, ?, ?, NOW(), NOW())
         ");
-        $stmt->execute([$companyId, $firstName, $lastName, $email, $userSlug, $userId]);
+        $stmt->execute([$companyId, $firstName, $lastName, $email, $userSlug, $uuid, $userId]);
     } else {
-        // For company profiles, create regular contact
+        // For company profiles, create regular contact with UUID
         $stmt = $pdo->prepare("
             INSERT INTO contacts 
-            (company_id, first_name, last_name, email, position, created_by, created_at, updated_at) 
-            VALUES (?, ?, ?, ?, 'Founder', ?, NOW(), NOW())
+            (company_id, first_name, last_name, email, position, uuid, created_by, created_at, updated_at) 
+            VALUES (?, ?, ?, ?, 'Founder', ?, ?, NOW(), NOW())
         ");
-        $stmt->execute([$companyId, $firstName, $lastName, $email, $userId]);
+        $stmt->execute([$companyId, $firstName, $lastName, $email, $uuid, $userId]);
     }
     
     // Commit transaction

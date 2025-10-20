@@ -4,10 +4,6 @@ session_start();
 // Set JSON response header early
 header('Content-Type: application/json');
 
-// Enable error reporting for debugging
-error_reporting(E_ALL);
-ini_set('display_errors', 0); // Don't display errors in JSON response
-
 // Database connection
 try {
     $host = 'localhost';
@@ -84,6 +80,7 @@ try {
     $_SESSION['user_name'] = $user['first_name'] . ' ' . $user['last_name'];
     $_SESSION['user_email'] = $user['email'];
     $_SESSION['user_role'] = $user['role'];
+    $_SESSION['is_private_profile'] = $user['is_private_profile'] ?? false;
     
     if ($company) {
         $_SESSION['company_slug'] = $company['slug'];
@@ -97,11 +94,21 @@ try {
     if ($company && $company['slug']) {
         $redirectUrl = '/' . $company['slug'];
     } elseif ($user['is_private_profile']) {
-        // Use new private profile URL format - prefer ID over slug
-        if (!empty($user['id'])) {
-            $redirectUrl = '/private/' . $user['id'];
-        } else {
+        // Get UUID from user's contact record for private profiles
+        $stmt = $pdo->prepare("
+            SELECT uuid FROM contacts 
+            WHERE created_by = ? AND company_id = (SELECT id FROM companies WHERE slug = 'private')
+            LIMIT 1
+        ");
+        $stmt->execute([$user['id']]);
+        $contactRecord = $stmt->fetch();
+        
+        if ($contactRecord && !empty($contactRecord['uuid'])) {
+            $redirectUrl = '/private/' . $contactRecord['uuid'];
+        } elseif (!empty($user['profile_slug'])) {
             $redirectUrl = '/private/' . $user['profile_slug'];
+        } else {
+            $redirectUrl = '/private/' . $user['id']; // fallback to user ID
         }
     }
     

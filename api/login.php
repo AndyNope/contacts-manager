@@ -104,11 +104,29 @@ try {
         error_log('Last login update failed: ' . $e->getMessage());
     }
     
+    // Determine redirect URL based on user type
+    if ($user['company_slug'] && $user['company_slug'] !== 'private') {
+        // Company user - redirect to company dashboard
+        $redirectUrl = '/' . $user['company_slug'];
+    } else {
+        // Private profile user - check if they have is_private_profile flag
+        // For private users, redirect to their specific profile
+        $stmt = $pdo->prepare("SELECT is_private_profile FROM users WHERE id = ?");
+        $stmt->execute([$user['id']]);
+        $userProfile = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if ($userProfile && $userProfile['is_private_profile']) {
+            $redirectUrl = '/private/' . $user['id'];
+        } else {
+            $redirectUrl = '/dashboard';
+        }
+    }
+    
     // Return success response
     echo json_encode([
         'success' => true,
         'message' => 'Login successful!',
-        'redirect_url' => '/' . $user['company_slug'],
+        'redirect_url' => $redirectUrl,
         'user' => [
             'id' => $user['id'],
             'name' => $user['first_name'] . ' ' . $user['last_name'],

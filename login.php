@@ -63,8 +63,18 @@ if ($_POST) {
                         $_SESSION['user_role'] = $user['role'] ?: 'user';
                         $_SESSION['user_name'] = $user['first_name'] . ' ' . $user['last_name'];
                         
-                        // Redirect to appropriate dashboard
-                        $redirectUrl = $userWithCompany['company_slug'] ? '/' . $userWithCompany['company_slug'] : '/dashboard';
+                        // Determine redirect URL based on user type
+                        if ($userWithCompany['company_slug'] && $userWithCompany['company_slug'] !== 'private') {
+                            // Company user - redirect to company dashboard
+                            $redirectUrl = '/' . $userWithCompany['company_slug'];
+                        } elseif (isset($user['is_private_profile']) && $user['is_private_profile']) {
+                            // Private profile user - redirect to their specific profile
+                            $redirectUrl = '/private/' . $user['id'];
+                        } else {
+                            // Fallback to dashboard
+                            $redirectUrl = '/dashboard';
+                        }
+                        
                         header('Location: ' . $redirectUrl);
                         exit;
                     } else {
