@@ -51,6 +51,70 @@ function generateCleanProfileUrl($firstName, $lastName) {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
             min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        /* Cool Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes bounceIn {
+            0% {
+                opacity: 0;
+                transform: scale(0.3);
+            }
+            50% {
+                opacity: 1;
+                transform: scale(1.05);
+            }
+            70% {
+                transform: scale(0.9);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+        
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(107, 0, 179, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(107, 0, 179, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(107, 0, 179, 0);
+            }
+        }
+        
+        @keyframes float {
+            0% {
+                transform: translateY(0px);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
+            100% {
+                transform: translateY(0px);
+            }
+        }
+        
+        @keyframes shimmer {
+            0% {
+                background-position: -200px 0;
+            }
+            100% {
+                background-position: calc(200px + 100%) 0;
+            }
         }
 
         .profile-header {
@@ -67,23 +131,39 @@ function generateCleanProfileUrl($firstName, $lastName) {
             object-fit: cover;
             border: 6px solid rgba(255, 255, 255, 0.2);
             margin-bottom: 20px;
+            animation: bounceIn 1s ease-out, float 3s ease-in-out infinite 2s;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .profile-photo:hover {
+            transform: scale(1.1);
+            border-color: rgba(245, 158, 11, 0.8);
+            box-shadow: 0 0 30px rgba(245, 158, 11, 0.5);
         }
 
         .profile-name {
             font-size: 2.5rem;
             font-weight: 700;
             margin-bottom: 10px;
+            animation: fadeInUp 0.8s ease-out 0.3s both;
+            background: linear-gradient(45deg, #ffffff, #f59e0b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
         .profile-position {
             font-size: 1.2rem;
             opacity: 0.9;
             margin-bottom: 5px;
+            animation: fadeInUp 0.8s ease-out 0.5s both;
         }
 
         .profile-company {
             font-size: 1rem;
             opacity: 0.8;
+            animation: fadeInUp 0.8s ease-out 0.7s both;
         }
 
         .back-link {
@@ -106,6 +186,26 @@ function generateCleanProfileUrl($firstName, $lastName) {
             margin-bottom: 25px;
             border: 1px solid rgba(30, 58, 138, 0.1);
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            animation: fadeInUp 0.6s ease-out both;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .contact-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -200px;
+            width: 200px;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            animation: shimmer 2s infinite;
+        }
+        
+        .contact-section:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
         }
 
         .contact-item {
@@ -113,6 +213,22 @@ function generateCleanProfileUrl($firstName, $lastName) {
             align-items: center;
             padding: 15px 0;
             border-bottom: 1px solid #f1f5f9;
+            animation: fadeInUp 0.5s ease-out both;
+            transition: all 0.3s ease;
+        }
+        
+        .contact-item:nth-child(1) { animation-delay: 0.1s; }
+        .contact-item:nth-child(2) { animation-delay: 0.2s; }
+        .contact-item:nth-child(3) { animation-delay: 0.3s; }
+        .contact-item:nth-child(4) { animation-delay: 0.4s; }
+        .contact-item:nth-child(5) { animation-delay: 0.5s; }
+        
+        .contact-item:hover {
+            transform: translateX(10px);
+            background: rgba(107, 0, 179, 0.02);
+            border-radius: 10px;
+            margin: 0 -10px;
+            padding: 15px 20px;
         }
 
         .contact-item:last-child {
@@ -130,6 +246,12 @@ function generateCleanProfileUrl($firstName, $lastName) {
             justify-content: center;
             margin-right: 15px;
             flex-shrink: 0;
+            transition: all 0.3s ease;
+        }
+        
+        .contact-item:hover .contact-icon {
+            transform: rotate(360deg) scale(1.1);
+            background: linear-gradient(135deg, var(--accent-color), var(--primary-color));
         }
 
         .contact-link {
@@ -149,6 +271,10 @@ function generateCleanProfileUrl($firstName, $lastName) {
             gap: 15px;
             margin-bottom: 30px;
         }
+        
+        .action-buttons .action-btn:nth-child(1) { animation-delay: 0.2s; }
+        .action-buttons .action-btn:nth-child(2) { animation-delay: 0.4s; }
+        .action-buttons .action-btn:nth-child(3) { animation-delay: 0.6s; }
 
         .action-btn {
             background: white;
@@ -163,23 +289,48 @@ function generateCleanProfileUrl($firstName, $lastName) {
             align-items: center;
             justify-content: center;
             gap: 10px;
+            position: relative;
+            overflow: hidden;
+            animation: fadeInUp 0.6s ease-out both;
+        }
+        
+        .action-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.5s;
+        }
+        
+        .action-btn:hover::before {
+            left: 100%;
         }
 
         .action-btn:hover {
             background: var(--primary-color);
             color: white;
-            transform: translateY(-2px);
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 10px 25px rgba(107, 0, 179, 0.3);
+        }
+        
+        .action-btn:active {
+            transform: translateY(-1px) scale(0.98);
         }
 
         .action-btn.primary {
             background: var(--accent-color);
             border-color: var(--accent-color);
             color: white;
+            animation: pulse 2s infinite;
         }
 
         .action-btn.primary:hover {
             background: #d97706;
             border-color: #d97706;
+            box-shadow: 0 10px 25px rgba(245, 158, 11, 0.4);
         }
 
         .qr-section {
@@ -189,12 +340,26 @@ function generateCleanProfileUrl($firstName, $lastName) {
             border-radius: 20px;
             border: 1px solid rgba(30, 58, 138, 0.1);
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            animation: fadeInUp 0.8s ease-out 0.4s both;
+            transition: all 0.3s ease;
+        }
+        
+        .qr-section:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
         }
 
         .qr-code {
             max-width: 200px;
             border-radius: 15px;
             margin-bottom: 15px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .qr-code:hover {
+            transform: scale(1.05) rotate(2deg);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
         }
 
         .stats-section {
@@ -271,7 +436,7 @@ function generateCleanProfileUrl($firstName, $lastName) {
             <div class="col-lg-8">
                 <!-- Action Buttons -->
                 <div class="action-buttons">
-                    <a href="/api/business-card/<?= $contact['id'] ?>" target="_blank" class="action-btn primary">
+                    <a href="/api/business-card-pdf.php?contact=<?= $contact['id'] ?>&format=download" target="_blank" class="action-btn primary">
                         <i class="bi bi-file-earmark-pdf"></i>
                         Download Business Card
                     </a>

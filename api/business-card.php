@@ -26,8 +26,9 @@ if (!$pdo) {
     }
 }
 
-// Get contact ID from query parameters
+// Get contact ID and format from query parameters
 $contactId = $_GET['contact'] ?? $_GET['id'] ?? null;
+$format = $_GET['format'] ?? 'html'; // html, download, preview
 
 if (!$contactId || !is_numeric($contactId)) {
     http_response_code(400);
@@ -73,12 +74,31 @@ try {
     
     // Generate business card HTML
     $businessCardGenerator = new BusinessCardGenerator($contact);
-    $html = $businessCardGenerator->generateHTML();
     
-    // Set headers for HTML output
-    header('Content-Type: text/html; charset=utf-8');
-    
-    echo $html;
+    if ($format === 'preview') {
+        // Return JSON for preview
+        header('Content-Type: application/json');
+        echo json_encode([
+            'success' => true,
+            'html' => $businessCardGenerator->generateHTML(),
+            'contact_name' => $contact['first_name'] . ' ' . $contact['last_name']
+        ]);
+    } elseif ($format === 'download') {
+        // Generate downloadable PDF-ready HTML
+        $html = $businessCardGenerator->generatePDFHTML();
+        
+        header('Content-Type: text/html; charset=utf-8');
+        header('Content-Disposition: attachment; filename="business-card-' . sanitizeFileName($contact['first_name'] . '-' . $contact['last_name']) . '.html"');
+        
+        echo $html;
+    } else {
+        // Default HTML output
+        $html = $businessCardGenerator->generateHTML();
+        
+        header('Content-Type: text/html; charset=utf-8');
+        
+        echo $html;
+    }
     
 } catch (Exception $e) {
     error_log('Business Card API Error: ' . $e->getMessage());
@@ -366,6 +386,279 @@ class BusinessCardGenerator {
         
         return sprintf('#%02x%02x%02x', $r, $g, $b);
     }
+    
+    public function generatePDFHTML() {
+        $name = htmlspecialchars($this->contact['first_name'] . ' ' . $this->contact['last_name']);
+        $jobTitle = htmlspecialchars($this->contact['job_title'] ?? $this->contact['position'] ?? '');
+        $company = htmlspecialchars($this->contact['company_name'] ?? '');
+        $phone = htmlspecialchars($this->contact['phone'] ?? '');
+        $email = htmlspecialchars($this->contact['email'] ?? '');
+        $website = htmlspecialchars($this->contact['website'] ?? '');
+        
+        // Brand color from company or default
+        $brandColor = $this->contact['brand_color'] ?? '#1e3a8a';
+        
+        // Generate profile URL for QR code
+        $profileUrl = 'https://' . $_SERVER['HTTP_HOST'] . '/' . $this->contact['company_slug'] . '/profile/' . $this->contact['slug'];
+        $qrCodeUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' . urlencode($profileUrl);
+        
+        // Profile picture HTML
+        $profilePictureHtml = '';
+        $profilePicDiv = '';
+        $contentMargin = 'margin-left: 0.8in;';
+        
+        if (!empty($this->contact['photo_url'])) {
+            $profilePictureHtml = '
+            .profile-pic {
+                position: absolute;
+                top: 0.15in;
+                left: 0.15in;
+                width: 0.6in;
+                height: 0.6in;
+                border-radius: 50%;
+                overflow: hidden;
+                border: 2px solid rgba(255,255,255,0.3);
+                background: white;
+            }
+            
+            .profile-pic img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }';
+            
+            $profilePicDiv = '<div class="profile-pic"><img src="' . htmlspecialchars($this->contact['photo_url']) . '" alt="' . $name . '"></div>';
+        } else {
+            $initials = strtoupper(substr($this->contact['first_name'], 0, 1) . substr($this->contact['last_name'], 0, 1));
+            $profilePictureHtml = '
+            .profile-pic {
+                position: absolute;
+                top: 0.15in;
+                left: 0.15in;
+                width: 0.6in;
+                height: 0.6in;
+                border-radius: 50%;
+                background: rgba(255,255,255,0.2);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 18px;
+                font-weight: bold;
+                border: 2px solid rgba(255,255,255,0.3);
+            }';
+            
+            $profilePicDiv = '<div class="profile-pic">' . $initials . '</div>';
+        }
+        
+        return '<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Business Card - ' . $name . '</title>
+    <style>
+        @page {
+            size: 3.5in 2in;
+            margin: 0;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: "Helvetica Neue", Arial, sans-serif;
+            width: 3.5in;
+            height: 4in; /* Double height for both sides */
+        }
+        
+        .business-card {
+            width: 3.5in;
+            height: 2in;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            position: relative;
+            page-break-after: always;
+        }
+        
+        /* Front side */
+        .front {
+            background: linear-gradient(135deg, ' . $brandColor . ' 0%, ' . $this->darkenColor($brandColor, 10) . ' 100%);
+            color: white;
+            padding: 0.3in;
+        }
+        
+        /* Back side */
+        .back {
+            background: linear-gradient(135deg, ' . $this->darkenColor($brandColor, 10) . ' 0%, ' . $brandColor . ' 100%);
+            color: white;
+            padding: 0.3in;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .content {
+            ' . $contentMargin . '
+        }
+        
+        .name {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 4px;
+            line-height: 1.1;
+        }
+        
+        .position {
+            font-size: 12px;
+            opacity: 0.9;
+            margin-bottom: 2px;
+        }
+        
+        .company {
+            font-size: 11px;
+            opacity: 0.8;
+            margin-bottom: 8px;
+        }
+        
+        .contact-info {
+            font-size: 9px;
+            line-height: 1.3;
+            opacity: 0.9;
+        }
+        
+        .contact-info p {
+            margin-bottom: 1px;
+        }
+        
+        .logo {
+            position: absolute;
+            top: 0.2in;
+            right: 0.2in;
+            width: 0.4in;
+            height: 0.4in;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+        }' . $profilePictureHtml . '
+        
+        /* QR Code side */
+        .qr-section {
+            text-align: center;
+            flex: 1;
+        }
+        
+        .qr-code {
+            width: 1.2in;
+            height: 1.2in;
+            background: white;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 8px;
+        }
+        
+        .qr-code img {
+            width: 1in;
+            height: 1in;
+        }
+        
+        .qr-text {
+            font-size: 8px;
+            opacity: 0.9;
+            text-align: center;
+        }
+        
+        .back-info {
+            flex: 1;
+            text-align: right;
+        }
+        
+        .back-logo {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 4px;
+            opacity: 0.9;
+        }
+        
+        .back-tagline {
+            font-size: 10px;
+            opacity: 0.8;
+        }
+        
+        /* Print styles */
+        @media print {
+            body {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            
+            .business-card {
+                page-break-after: always;
+            }
+        }
+        
+        /* Instructions for cutting */
+        .instructions {
+            width: 3.5in;
+            padding: 0.2in;
+            background: #f0f0f0;
+            font-size: 10px;
+            text-align: center;
+            color: #666;
+            border-top: 1px dashed #ccc;
+        }
+    </style>
+</head>
+<body>
+    <!-- FRONT SIDE -->
+    <div class="business-card front">
+        ' . $profilePicDiv . '
+        <div class="logo">EC</div>
+        <div class="content">
+            <h1 class="name">' . $name . '</h1>
+            ' . ($jobTitle ? '<p class="position">' . $jobTitle . '</p>' : '') . '
+            ' . ($company ? '<p class="company">' . $company . '</p>' : '') . '
+            <div class="contact-info">
+                ' . ($email ? '<p>' . $email . '</p>' : '') . '
+                ' . ($phone ? '<p>' . $phone . '</p>' : '') . '
+                ' . ($website ? '<p>' . str_replace(['http://', 'https://'], '', $website) . '</p>' : '') . '
+            </div>
+        </div>
+    </div>
+    
+    <!-- BACK SIDE -->
+    <div class="business-card back">
+        <div class="qr-section">
+            <div class="qr-code">
+                <img src="' . $qrCodeUrl . '" alt="QR Code">
+            </div>
+            <div class="qr-text">
+                Scan to view<br>digital profile
+            </div>
+        </div>
+        
+        <div class="back-info">
+            <div class="back-logo">EasyContact</div>
+            <div class="back-tagline">Professional Digital Cards</div>
+        </div>
+    </div>
+    
+    <!-- Cutting Instructions -->
+    <div class="instructions">
+        📏 Cut along the center line to separate front and back sides • Standard business card size: 3.5" × 2" (89mm × 51mm)
+    </div>
+</body>
+</html>';
+    }
 }
 
 /**
@@ -421,5 +714,14 @@ function canAccessContactAPI($pdo, $contact) {
     
     // Default: only public contacts
     return isset($contact['is_public']) && $contact['is_public'];
+}
+
+/**
+ * Sanitize filename for downloads
+ */
+function sanitizeFileName($filename) {
+    $filename = preg_replace('/[^A-Za-z0-9\-_]/', '-', $filename);
+    $filename = preg_replace('/-+/', '-', $filename);
+    return trim($filename, '-');
 }
 ?>
