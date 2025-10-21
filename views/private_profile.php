@@ -241,7 +241,7 @@ $profileUrl = generatePrivateProfileUrl($contact);
                                 <i class="fas fa-id-card mr-2"></i>
                                 Business Card Tools
                             </h4>
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
                                 <button onclick="previewBusinessCard()" 
                                         class="flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
                                     <i class="fas fa-eye mr-2"></i>
@@ -252,14 +252,7 @@ $profileUrl = generatePrivateProfileUrl($contact);
                                    target="_blank"
                                    class="flex items-center justify-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
                                     <i class="fas fa-file-pdf mr-2"></i>
-                                    Two-Sided PDF
-                                </a>
-                                
-                                <a href="/api/business-card-pdf.php?contact=<?= $contact['id'] ?>&format=download-qr" 
-                                   target="_blank"
-                                   class="flex items-center justify-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
-                                    <i class="fas fa-qrcode mr-2"></i>
-                                    QR Card
+                                    Download PDF
                                 </a>
                             </div>
                             <p class="text-xs text-blue-700 dark:text-blue-300">
@@ -373,19 +366,8 @@ $profileUrl = generatePrivateProfileUrl($contact);
                        target="_blank"
                        class="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors">
                         <i class="fas fa-file-pdf mr-1"></i>
-                        Two-Sided PDF
+                        Download PDF
                     </a>
-                    <a href="/api/business-card-pdf.php?contact=<?= $contact['id'] ?>&format=download-qr" 
-                       target="_blank"
-                       class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors">
-                        <i class="fas fa-qrcode mr-1"></i>
-                        QR Card
-                    </a>
-                    <button onclick="printBusinessCard()" 
-                            class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors">
-                        <i class="fas fa-print mr-1"></i>
-                        Print
-                    </button>
                     <button onclick="copyCardInfo()" 
                             class="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors">
                         <i class="fas fa-copy mr-1"></i>
@@ -397,7 +379,7 @@ $profileUrl = generatePrivateProfileUrl($contact);
             <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3">
                 <p class="text-xs text-blue-700 dark:text-blue-300">
                     <i class="fas fa-lightbulb mr-1"></i>
-                    <strong>Pro Tip:</strong> Choose "Two-Sided PDF" for front + QR back, or "QR Card" for QR-only back. Perfect for any professional printing company!
+                    <strong>Pro Tip:</strong> Download includes both front side with your info and back side with QR code. Perfect for professional printing companies!
                 </p>
             </div>
         </div>

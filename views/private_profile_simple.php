@@ -151,11 +151,7 @@ $profileUrl = '/private/' . $contactId;
                             </button>
                             <a href="/api/business-card-pdf.php?contact=<?= $contactId ?>&format=download" 
                                target="_blank" class="btn btn-sm btn-outline-purple">
-                                <i class="bi bi-file-earmark-pdf me-1"></i>Two-Sided PDF
-                            </a>
-                            <a href="/api/business-card-pdf.php?contact=<?= $contactId ?>&format=download-qr" 
-                               target="_blank" class="btn btn-sm btn-outline-success">
-                                <i class="bi bi-qr-code me-1"></i>QR Card
+                                <i class="bi bi-file-earmark-pdf me-1"></i>Download PDF
                             </a>
                         </div>
                         <small class="d-block mt-2 text-muted">
@@ -336,15 +332,8 @@ $profileUrl = '/private/' . $contactId;
                     <div class="d-flex justify-content-center gap-2 flex-wrap">
                         <a href="/api/business-card-pdf.php?contact=<?= $contactId ?>&format=download" 
                            target="_blank" class="btn btn-purple">
-                            <i class="bi bi-file-earmark-pdf me-1"></i>Two-Sided PDF
+                            <i class="bi bi-file-earmark-pdf me-1"></i>Download PDF
                         </a>
-                        <a href="/api/business-card-pdf.php?contact=<?= $contactId ?>&format=download-qr" 
-                           target="_blank" class="btn btn-success">
-                            <i class="bi bi-qr-code me-1"></i>QR Card
-                        </a>
-                        <button onclick="printBusinessCard()" class="btn btn-info">
-                            <i class="bi bi-printer me-1"></i>Print
-                        </button>
                         <button onclick="copyCardInfo()" class="btn btn-secondary">
                             <i class="bi bi-clipboard me-1"></i>Copy Info
                         </button>
@@ -354,7 +343,7 @@ $profileUrl = '/private/' . $contactId;
                     <div class="alert alert-info mb-0 w-100">
                         <small>
                             <i class="bi bi-lightbulb me-1"></i>
-                            <strong>Pro Tip:</strong> Choose "Two-Sided PDF" for front + QR back, or "QR Card" for QR-only back. Perfect for any professional printing company!
+                            <strong>Pro Tip:</strong> Download includes both front side with your info and back side with QR code. Perfect for professional printing companies!
                         </small>
                     </div>
                 </div>
