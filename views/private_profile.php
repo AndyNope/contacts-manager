@@ -421,42 +421,96 @@ $profileUrl = generatePrivateProfileUrl($contact);
                             '<div style="position: absolute; top: 15px; left: 15px; width: 45px; height: 45px; border-radius: 50%; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 18px;"><?= strtoupper(substr($contact['first_name'], 0, 1) . substr($contact['last_name'], 0, 1)) ?></div>'
                         <?php endif; ?>;
                         
+                        const profileUrl = window.location.protocol + '//' + window.location.host + '/private/<?= $contact['uuid'] ?? $contact['id'] ?>';
+                        const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(profileUrl)}`;
+                        
                         container.innerHTML = `
-                            <div class="business-card-preview" style="
-                                width: 350px;
-                                height: 200px;
-                                margin: 0 auto;
-                                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                                border-radius: 12px;
-                                color: white;
-                                padding: 20px;
-                                display: flex;
-                                flex-direction: column;
-                                justify-content: center;
-                                position: relative;
-                                box-shadow: 0 8px 25px rgba(0,0,0,0.2);
-                                font-family: 'Helvetica Neue', Arial, sans-serif;
-                            ">
-                                <div style="position: absolute; top: 15px; right: 15px; width: 30px; height: 30px; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold;">EC</div>
-                                ${profilePicHtml}
-                                <div style="margin-left: 70px;">
-                                    <h1 style="font-size: 18px; font-weight: bold; margin-bottom: 4px; line-height: 1.1;"><?= htmlspecialchars($contact['first_name'] . ' ' . $contact['last_name']) ?></h1>
-                                    <?php if (!empty($contact['position'])): ?>
-                                    <p style="font-size: 14px; opacity: 0.9; margin-bottom: 2px;"><?= htmlspecialchars($contact['position']) ?></p>
-                                    <?php endif; ?>
-                                    <?php if (!empty($contact['company'])): ?>
-                                    <p style="font-size: 12px; opacity: 0.8; margin-bottom: 8px;"><?= htmlspecialchars($contact['company']) ?></p>
-                                    <?php endif; ?>
-                                    <div style="font-size: 10px; line-height: 1.3; opacity: 0.9;">
-                                        <?php if (!empty($contact['email'])): ?>
-                                        <p style="margin-bottom: 1px;"><?= htmlspecialchars($contact['email']) ?></p>
-                                        <?php endif; ?>
-                                        <?php if (!empty($contact['phone'])): ?>
-                                        <p style="margin-bottom: 1px;"><?= htmlspecialchars($contact['phone']) ?></p>
-                                        <?php endif; ?>
-                                        <?php if (!empty($contact['website'])): ?>
-                                        <p style="margin-bottom: 1px;"><?= htmlspecialchars(str_replace(['http://', 'https://'], '', $contact['website'])) ?></p>
-                                        <?php endif; ?>
+                            <div style="display: flex; gap: 20px; justify-content: center; flex-wrap: wrap;">
+                                <!-- FRONT SIDE -->
+                                <div>
+                                    <h4 style="text-align: center; margin-bottom: 10px; color: #374151; font-size: 14px;">Front Side</h4>
+                                    <div class="business-card-preview" style="
+                                        width: 300px;
+                                        height: 170px;
+                                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                                        border-radius: 12px;
+                                        color: white;
+                                        padding: 15px;
+                                        display: flex;
+                                        flex-direction: column;
+                                        justify-content: center;
+                                        position: relative;
+                                        box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+                                        font-family: 'Helvetica Neue', Arial, sans-serif;
+                                    ">
+                                        <div style="position: absolute; top: 12px; right: 12px; width: 25px; height: 25px; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold;">EC</div>
+                                        ${profilePicHtml.replace('45px', '38px').replace('18px', '15px').replace('15px', '12px')}
+                                        <div style="margin-left: 60px;">
+                                            <h1 style="font-size: 16px; font-weight: bold; margin-bottom: 3px; line-height: 1.1;"><?= htmlspecialchars($contact['first_name'] . ' ' . $contact['last_name']) ?></h1>
+                                            <?php if (!empty($contact['position'])): ?>
+                                            <p style="font-size: 12px; opacity: 0.9; margin-bottom: 2px;"><?= htmlspecialchars($contact['position']) ?></p>
+                                            <?php endif; ?>
+                                            <?php if (!empty($contact['company'])): ?>
+                                            <p style="font-size: 10px; opacity: 0.8; margin-bottom: 6px;"><?= htmlspecialchars($contact['company']) ?></p>
+                                            <?php endif; ?>
+                                            <div style="font-size: 8px; line-height: 1.3; opacity: 0.9;">
+                                                <?php if (!empty($contact['email'])): ?>
+                                                <p style="margin-bottom: 1px;"><?= htmlspecialchars($contact['email']) ?></p>
+                                                <?php endif; ?>
+                                                <?php if (!empty($contact['phone'])): ?>
+                                                <p style="margin-bottom: 1px;"><?= htmlspecialchars($contact['phone']) ?></p>
+                                                <?php endif; ?>
+                                                <?php if (!empty($contact['website'])): ?>
+                                                <p style="margin-bottom: 1px;"><?= htmlspecialchars(str_replace(['http://', 'https://'], '', $contact['website'])) ?></p>
+                                                <?php endif; ?>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- BACK SIDE -->
+                                <div>
+                                    <h4 style="text-align: center; margin-bottom: 10px; color: #374151; font-size: 14px;">Back Side</h4>
+                                    <div class="business-card-back" style="
+                                        width: 300px;
+                                        height: 170px;
+                                        background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+                                        border-radius: 12px;
+                                        color: white;
+                                        padding: 15px;
+                                        display: flex;
+                                        align-items: center;
+                                        justify-content: space-between;
+                                        position: relative;
+                                        box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+                                        font-family: 'Helvetica Neue', Arial, sans-serif;
+                                    ">
+                                        <div style="text-align: center; flex: 1;">
+                                            <div style="
+                                                width: 100px;
+                                                height: 100px;
+                                                background: white;
+                                                border-radius: 8px;
+                                                display: flex;
+                                                align-items: center;
+                                                justify-content: center;
+                                                margin: 0 auto 8px;
+                                                padding: 5px;
+                                            ">
+                                                <img src="${qrCodeUrl}" alt="QR Code" style="width: 90px; height: 90px; border-radius: 4px;">
+                                            </div>
+                                            <div style="font-size: 9px; opacity: 0.9; line-height: 1.2;">
+                                                Scan to view<br>digital profile
+                                            </div>
+                                        </div>
+                                        
+                                        <div style="text-align: right; flex: 1; padding-left: 15px;">
+                                            <div style="font-size: 18px; font-weight: bold; margin-bottom: 4px; opacity: 0.95;">EasyContact</div>
+                                            <div style="font-size: 10px; opacity: 0.8; margin-bottom: 8px;">Professional Digital Cards</div>
+                                            <div style="font-size: 8px; opacity: 0.7; word-break: break-all; line-height: 1.2;">
+                                                ${profileUrl}
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
