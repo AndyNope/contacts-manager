@@ -24,6 +24,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 // Get form data
+$userType = $_POST['user_type'] ?? 'individual';
 $companyName = trim($_POST['company_name'] ?? '');
 $firstName = trim($_POST['first_name'] ?? '');
 $lastName = trim($_POST['last_name'] ?? '');
@@ -36,8 +37,12 @@ $agreeTerms = isset($_POST['agree_terms']);
 // Validation
 $errors = [];
 
-if (empty($companyName)) {
-    $errors[] = 'Company name is required';
+// Determine if this is a private profile based on user type
+$isPrivateProfile = ($userType === 'individual');
+
+// Validate company name based on user type
+if ($userType === 'company' && empty($companyName)) {
+    $errors[] = 'Company name is required for company accounts';
 }
 
 if (empty($firstName)) {
@@ -52,8 +57,29 @@ if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
     $errors[] = 'Valid email address is required';
 }
 
-if (empty($password) || strlen($password) < 8) {
-    $errors[] = 'Password must be at least 8 characters long';
+// Strong password validation
+if (empty($password)) {
+    $errors[] = 'Password is required';
+} else {
+    if (strlen($password) < 8) {
+        $errors[] = 'Password must be at least 8 characters long';
+    }
+    
+    if (!preg_match('/[a-z]/', $password)) {
+        $errors[] = 'Password must contain at least one lowercase letter';
+    }
+    
+    if (!preg_match('/[A-Z]/', $password)) {
+        $errors[] = 'Password must contain at least one uppercase letter';
+    }
+    
+    if (!preg_match('/\d/', $password)) {
+        $errors[] = 'Password must contain at least one number';
+    }
+    
+    if (!preg_match('/[@$!%*?&]/', $password)) {
+        $errors[] = 'Password must contain at least one special character (@$!%*?&)';
+    }
 }
 
 if ($password !== $confirmPassword) {
@@ -68,11 +94,11 @@ if (!in_array($plan, ['free', 'basic', 'premium'])) {
     $errors[] = 'Invalid plan selected';
 }
 
-// For free plan, allow private profiles
-$isPrivateProfile = false;
-if ($plan === 'free' && (empty($companyName) || $companyName === 'Private Profile')) {
+// Set up profile based on user type
+if ($isPrivateProfile) {
+    // Individual user - force free plan and set company name
+    $plan = 'free';
     $companyName = $firstName . ' ' . $lastName . ' (Private)';
-    $isPrivateProfile = true;
 }
 
 if (!empty($errors)) {

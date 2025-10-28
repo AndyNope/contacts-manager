@@ -77,26 +77,53 @@ if (isset($_GET['success'])) {
             border: 1px solid rgba(255, 255, 255, 0.2);
         }
         
+        .user-type-selector {
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: white;
+        }
+
+        .user-type-selector:hover {
+            border-color: #8b5cf6;
+            background-color: #faf5ff;
+        }
+
+        .user-type-selector.selected {
+            border-color: #8b5cf6;
+            background-color: #f3e8ff;
+            box-shadow: 0 0 0 1px #8b5cf6;
+        }
+
         .plan-selector {
             border: 2px solid #e5e7eb;
             border-radius: 12px;
-            padding: 16px;
+            padding: 20px;
             margin-bottom: 12px;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.2s;
         }
-        
+
         .plan-selector:hover {
-            border-color: #c4b5fd;
-            background: rgba(139, 92, 246, 0.02);
+            border-color: #8b5cf6;
+            background-color: #faf5ff;
         }
-        
+
         .plan-selector.selected {
             border-color: #8b5cf6;
-            background: rgba(139, 92, 246, 0.05);
+            background-color: #f3e8ff;
+            box-shadow: 0 0 0 1px #8b5cf6;
         }
-        
-        .plan-price {
+
+        .password-strength {
+            margin-top: 8px;
+        }
+
+        .strength-weak { background-color: #ef4444; }
+        .strength-fair { background-color: #f59e0b; }
+        .strength-good { background-color: #10b981; }
+        .strength-strong { background-color: #059669; }        .plan-price {
             font-weight: 700;
             color: #8b5cf6;
         }
@@ -137,59 +164,88 @@ if (isset($_GET['success'])) {
 
             <!-- Registration Form -->
             <form method="POST" action="/api/register.php" id="registerForm">
-                <!-- Plan Selection -->
+                <!-- User Type Selection -->
                 <div class="mb-6">
-                    <label class="block text-sm font-medium text-gray-700 mb-3">Choose Your Plan</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-3">What type of account do you want?</label>
                     
-                    <div class="plan-selector <?= $selectedPlan === 'free' ? 'selected' : '' ?>" onclick="selectPlan('free')">
-                        <div class="flex justify-between items-center">
-                            <div>
-                                <h6 class="font-semibold text-gray-800">Free</h6>
-                                <small class="text-gray-500">Private profile, perfect for individuals</small>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div class="user-type-selector selected" onclick="selectUserType('individual')" id="individual-type">
+                            <div class="text-center p-4">
+                                <div class="mb-3">
+                                    <i class="fas fa-user text-3xl text-primary-500"></i>
+                                </div>
+                                <h6 class="font-semibold text-gray-800 mb-2">Individual</h6>
+                                <small class="text-gray-500">Personal digital business card</small>
+                                <div class="mt-2">
+                                    <span class="inline-flex items-center px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
+                                        <i class="fas fa-check mr-1"></i> FREE
+                                    </span>
+                                </div>
                             </div>
-                            <div class="plan-price">€0/month</div>
+                            <input type="radio" name="user_type" value="individual" checked style="display: none;">
                         </div>
-                        <input type="radio" name="plan" value="free" <?= $selectedPlan === 'free' ? 'checked' : '' ?> style="display: none;">
-                    </div>
-                    
-                    <div class="plan-selector <?= $selectedPlan === 'basic' ? 'selected' : '' ?>" onclick="selectPlan('basic')">
-                        <div class="flex justify-between items-center">
-                            <div>
-                                <h6 class="font-semibold text-gray-800">Basic</h6>
-                                <small class="text-gray-500">50 contacts, company branding</small>
+                        
+                        <div class="user-type-selector" onclick="selectUserType('company')" id="company-type">
+                            <div class="text-center p-4">
+                                <div class="mb-3">
+                                    <i class="fas fa-building text-3xl text-primary-500"></i>
+                                </div>
+                                <h6 class="font-semibold text-gray-800 mb-2">Company</h6>
+                                <small class="text-gray-500">Team contact management</small>
+                                <div class="mt-2">
+                                    <span class="inline-flex items-center px-2 py-1 text-xs font-medium bg-primary-100 text-primary-800 rounded-full">
+                                        <i class="fas fa-star mr-1"></i> PREMIUM
+                                    </span>
+                                </div>
                             </div>
-                            <div class="plan-price">€9.99/month</div>
+                            <input type="radio" name="user_type" value="company" style="display: none;">
                         </div>
-                        <input type="radio" name="plan" value="basic" <?= $selectedPlan === 'basic' ? 'checked' : '' ?> style="display: none;">
-                    </div>
-                    
-                    <div class="plan-selector <?= $selectedPlan === 'premium' ? 'selected' : '' ?>" onclick="selectPlan('premium')">
-                        <div class="flex justify-between items-center">
-                            <div>
-                                <h6 class="font-semibold text-gray-800">Premium</h6>
-                                <small class="text-gray-500">Unlimited contacts, white-label</small>
-                            </div>
-                            <div class="plan-price">€29.99/month</div>
-                        </div>
-                        <input type="radio" name="plan" value="premium" <?= $selectedPlan === 'premium' ? 'checked' : '' ?> style="display: none;">
                     </div>
                 </div>
 
-                <!-- Company Information -->
-                <div id="companyFields" class="mb-6">
+                <!-- Plan Selection (shown for company users) -->
+                <div class="mb-6" id="planSelection" style="display: none;">
+                    <label class="block text-sm font-medium text-gray-700 mb-3">Choose Your Company Plan</label>
+                    
+                    <div class="plan-selector" onclick="selectPlan('basic')" id="basic-plan">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <h6 class="font-semibold text-gray-800">Basic</h6>
+                                <small class="text-gray-500">Up to 50 contacts, company branding</small>
+                            </div>
+                            <div class="plan-price">€9.99/month</div>
+                        </div>
+                        <input type="radio" name="plan" value="basic" style="display: none;">
+                    </div>
+                    
+                    <div class="plan-selector" onclick="selectPlan('premium')" id="premium-plan">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <h6 class="font-semibold text-gray-800">Premium</h6>
+                                <small class="text-gray-500">Unlimited contacts, white-label, analytics</small>
+                            </div>
+                            <div class="plan-price">€29.99/month</div>
+                        </div>
+                        <input type="radio" name="plan" value="premium" style="display: none;">
+                    </div>
+                    
+                    <input type="hidden" name="plan" value="free" id="hidden-plan">
+                </div>
+
+                <!-- Company Information (shown for company users) -->
+                <div id="companyFields" class="mb-6" style="display: none;">
                     <div class="mb-4">
                         <label for="company_name" class="block text-sm font-medium text-gray-700 mb-2">
-                            Company Name 
-                            <small class="text-gray-500 font-normal">(Optional for Free Plan)</small>
+                            Company Name <span class="text-red-500">*</span>
                         </label>
                         <input type="text" 
                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent" 
                                id="company_name" 
                                name="company_name" 
                                value="<?= htmlspecialchars($_POST['company_name'] ?? '') ?>"
-                               placeholder="Leave empty for private profile">
+                               placeholder="Your Company Name">
                         <small class="text-gray-500 mt-1 block">
-                            Free plan: Leave empty for a private profile like /private/profile/your-name
+                            This will be your company's public URL: easycontact.com/your-company-name
                         </small>
                     </div>
                 </div>
@@ -234,7 +290,19 @@ if (isset($_GET['success'])) {
                                id="password" 
                                name="password" 
                                required 
-                               minlength="8">
+                               minlength="8"
+                               pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$"
+                               title="Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character">
+                        <div class="password-strength mt-2 hidden" id="passwordStrength">
+                            <div class="text-xs text-gray-600 mb-1">Password strength:</div>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div class="bg-red-500 h-2 rounded-full transition-all duration-300" style="width: 0%" id="strengthBar"></div>
+                            </div>
+                            <div class="text-xs mt-1" id="strengthText">Weak</div>
+                        </div>
+                        <small class="text-gray-500 mt-1 block">
+                            Must contain: uppercase, lowercase, number, and special character (@$!%*?&)
+                        </small>
                     </div>
                     <div>
                         <label for="confirm_password" class="block text-sm font-medium text-gray-700 mb-2">Confirm Password</label>
@@ -243,6 +311,13 @@ if (isset($_GET['success'])) {
                                id="confirm_password" 
                                name="confirm_password" 
                                required>
+                        <div class="mt-2 hidden" id="passwordMatch">
+                            <div class="flex items-center text-sm">
+                                <i class="fas fa-check-circle text-green-500 mr-2 hidden" id="matchIcon"></i>
+                                <i class="fas fa-times-circle text-red-500 mr-2 hidden" id="noMatchIcon"></i>
+                                <span id="matchText" class="text-gray-500">Passwords must match</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -282,47 +357,197 @@ if (isset($_GET['success'])) {
     </div>
 
     <script>
+        function selectUserType(type) {
+            // Remove selected class from all user types
+            document.querySelectorAll('.user-type-selector').forEach(el => el.classList.remove('selected'));
+            
+            // Add selected class to clicked type
+            event.currentTarget.classList.add('selected');
+            
+            // Check the radio button
+            document.querySelector(`input[name="user_type"][value="${type}"]`).checked = true;
+            
+            // Show/hide fields based on user type
+            const planSelection = document.getElementById('planSelection');
+            const companyFields = document.getElementById('companyFields');
+            const companyNameInput = document.getElementById('company_name');
+            const hiddenPlan = document.getElementById('hidden-plan');
+            
+            if (type === 'individual') {
+                // Individual user - hide company fields and plan selection
+                planSelection.style.display = 'none';
+                companyFields.style.display = 'none';
+                companyNameInput.required = false;
+                hiddenPlan.value = 'free';
+                
+                // Clear any selected plans
+                document.querySelectorAll('.plan-selector').forEach(el => el.classList.remove('selected'));
+                document.querySelectorAll('input[name="plan"]').forEach(el => {
+                    if (el.id !== 'hidden-plan') el.checked = false;
+                });
+            } else {
+                // Company user - show company fields and plan selection
+                planSelection.style.display = 'block';
+                companyFields.style.display = 'block';
+                companyNameInput.required = true;
+                
+                // Select basic plan by default for companies
+                selectPlan('basic');
+            }
+        }
+
         function selectPlan(plan) {
             // Remove selected class from all plans
             document.querySelectorAll('.plan-selector').forEach(el => el.classList.remove('selected'));
             
             // Add selected class to clicked plan
-            event.currentTarget.classList.add('selected');
+            const planElement = document.getElementById(plan + '-plan');
+            if (planElement) {
+                planElement.classList.add('selected');
+            }
             
             // Check the radio button
-            document.querySelector(`input[value="${plan}"]`).checked = true;
+            document.querySelectorAll('input[name="plan"]').forEach(el => {
+                el.checked = el.value === plan;
+            });
+        }
+
+        // Password strength validation
+        function checkPasswordStrength(password) {
+            const strengthIndicator = document.getElementById('passwordStrength');
+            const strengthBar = document.getElementById('strengthBar');
+            const strengthText = document.getElementById('strengthText');
             
-            // Show/hide company fields based on plan
-            const companyFields = document.getElementById('companyFields');
-            const companyNameInput = document.getElementById('company_name');
-            
-            if (plan === 'free') {
-                // For free plan, company name is optional
-                companyNameInput.required = false;
-                companyFields.style.display = 'block';
-            } else {
-                // For paid plans, company name is required
-                companyNameInput.required = true;
-                companyFields.style.display = 'block';
+            if (!password) {
+                strengthIndicator.classList.add('hidden');
+                return;
             }
+            
+            strengthIndicator.classList.remove('hidden');
+            
+            let score = 0;
+            let feedback = [];
+            
+            // Check length
+            if (password.length >= 8) score += 1;
+            else feedback.push('at least 8 characters');
+            
+            // Check for lowercase
+            if (/[a-z]/.test(password)) score += 1;
+            else feedback.push('lowercase letter');
+            
+            // Check for uppercase
+            if (/[A-Z]/.test(password)) score += 1;
+            else feedback.push('uppercase letter');
+            
+            // Check for numbers
+            if (/\d/.test(password)) score += 1;
+            else feedback.push('number');
+            
+            // Check for special characters
+            if (/[@$!%*?&]/.test(password)) score += 1;
+            else feedback.push('special character');
+            
+            // Update strength bar and text
+            let width, color, text;
+            
+            if (score <= 1) {
+                width = '20%';
+                color = '#ef4444';
+                text = 'Very Weak';
+            } else if (score === 2) {
+                width = '40%';
+                color = '#f59e0b';
+                text = 'Weak';
+            } else if (score === 3) {
+                width = '60%';
+                color = '#eab308';
+                text = 'Fair';
+            } else if (score === 4) {
+                width = '80%';
+                color = '#10b981';
+                text = 'Good';
+            } else {
+                width = '100%';
+                color = '#059669';
+                text = 'Strong';
+            }
+            
+            strengthBar.style.width = width;
+            strengthBar.style.backgroundColor = color;
+            strengthText.textContent = text;
+            strengthText.style.color = color;
+            
+            return score >= 4;
         }
 
         // Password confirmation validation
-        document.getElementById('confirm_password').addEventListener('input', function() {
+        function checkPasswordMatch() {
             const password = document.getElementById('password').value;
-            const confirmPassword = this.value;
+            const confirmPassword = document.getElementById('confirm_password').value;
+            const passwordMatch = document.getElementById('passwordMatch');
+            const matchIcon = document.getElementById('matchIcon');
+            const noMatchIcon = document.getElementById('noMatchIcon');
+            const matchText = document.getElementById('matchText');
             
-            if (password !== confirmPassword) {
-                this.setCustomValidity('Passwords do not match');
-            } else {
-                this.setCustomValidity('');
+            if (!confirmPassword) {
+                passwordMatch.classList.add('hidden');
+                return;
             }
-        });
+            
+            passwordMatch.classList.remove('hidden');
+            
+            if (password === confirmPassword && password.length > 0) {
+                matchIcon.classList.remove('hidden');
+                noMatchIcon.classList.add('hidden');
+                matchText.textContent = 'Passwords match';
+                matchText.className = 'text-green-600';
+                document.getElementById('confirm_password').setCustomValidity('');
+            } else {
+                matchIcon.classList.add('hidden');
+                noMatchIcon.classList.remove('hidden');
+                matchText.textContent = 'Passwords do not match';
+                matchText.className = 'text-red-600';
+                document.getElementById('confirm_password').setCustomValidity('Passwords do not match');
+            }
+        }
 
-        // Initialize plan selection on page load
+        // Event listeners
         document.addEventListener('DOMContentLoaded', function() {
-            const selectedPlan = document.querySelector('input[name="plan"]:checked').value;
-            selectPlan(selectedPlan);
+            // Initialize individual user type by default
+            selectUserType('individual');
+            
+            // Password strength checking
+            document.getElementById('password').addEventListener('input', function() {
+                checkPasswordStrength(this.value);
+                checkPasswordMatch();
+            });
+            
+            // Password confirmation checking
+            document.getElementById('confirm_password').addEventListener('input', checkPasswordMatch);
+            
+            // Form validation on submit
+            document.getElementById('registerForm').addEventListener('submit', function(e) {
+                const password = document.getElementById('password').value;
+                const userType = document.querySelector('input[name="user_type"]:checked').value;
+                const companyName = document.getElementById('company_name').value;
+                
+                // Check password strength
+                if (!checkPasswordStrength(password)) {
+                    e.preventDefault();
+                    alert('Please choose a stronger password that meets all requirements.');
+                    return false;
+                }
+                
+                // Check company name for company users
+                if (userType === 'company' && !companyName.trim()) {
+                    e.preventDefault();
+                    alert('Please enter a company name.');
+                    return false;
+                }
+                
+                return true;
+            });
         });
     </script>
 </body>
