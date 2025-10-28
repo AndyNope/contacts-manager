@@ -5,21 +5,34 @@ session_start();
 require_once __DIR__ . '/../config/database.php';
 
 try {
-    if (!isset($_GET['contact']) || !is_numeric($_GET['contact'])) {
-        throw new Exception('Invalid contact ID');
-    }
-    
-    $contactId = (int)$_GET['contact'];
     $format = $_GET['format'] ?? 'preview'; // preview, download, download-qr
     $side = $_GET['side'] ?? 'front'; // front, back
     
     // Use the centralized database connection
     $pdo = getDatabaseConnection();
     
-    // Get contact details
-    $stmt = $pdo->prepare("SELECT * FROM contacts WHERE id = ?");
-    $stmt->execute([$contactId]);
-    $contact = $stmt->fetch(PDO::FETCH_ASSOC);
+    // Get contact details - support both ID and UUID
+    $contact = null;
+    
+    if (isset($_GET['contact'])) {
+        if (is_numeric($_GET['contact'])) {
+            // Contact ID lookup
+            $contactId = (int)$_GET['contact'];
+            $stmt = $pdo->prepare("SELECT * FROM contacts WHERE id = ?");
+            $stmt->execute([$contactId]);
+            $contact = $stmt->fetch(PDO::FETCH_ASSOC);
+        } elseif (preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $_GET['contact'])) {
+            // UUID lookup
+            $uuid = $_GET['contact'];
+            $stmt = $pdo->prepare("SELECT * FROM contacts WHERE uuid = ?");
+            $stmt->execute([$uuid]);
+            $contact = $stmt->fetch(PDO::FETCH_ASSOC);
+        }
+    }
+    
+    if (!$contact) {
+        throw new Exception('Contact not found or invalid contact identifier');
+    }
     
     if (!$contact) {
         throw new Exception('Contact not found');

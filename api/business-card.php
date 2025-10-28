@@ -14,24 +14,39 @@ if (!$pdo) {
 }
 
 // Get contact ID and format from query parameters
-$contactId = $_GET['contact'] ?? $_GET['id'] ?? null;
-$format = $_GET['format'] ?? 'html'; // html, download, preview
+$contactIdentifier = $_GET['contact'] ?? $_GET['id'] ?? null;
+$format = $_GET['format'] ?? 'html'; // html, json
 
-if (!$contactId || !is_numeric($contactId)) {
+if (!$contactIdentifier) {
     http_response_code(400);
-    die('Invalid or missing contact ID');
+    die('Invalid or missing contact identifier');
 }
 
 try {
-    // Get contact with company information
-    $stmt = $pdo->prepare("
-        SELECT c.*, co.name as company_name, co.slug as company_slug, co.brand_color, co.logo_url
-        FROM contacts c 
-        LEFT JOIN companies co ON c.company_id = co.id 
-        WHERE c.id = ? AND c.is_public = TRUE
-    ");
-    $stmt->execute([$contactId]);
-    $contact = $stmt->fetch(PDO::FETCH_ASSOC);
+    // Get contact with company information - support both ID and UUID
+    $contact = null;
+    
+    if (is_numeric($contactIdentifier)) {
+        // Contact ID lookup
+        $stmt = $pdo->prepare("
+            SELECT c.*, co.name as company_name, co.slug as company_slug, co.brand_color, co.logo_url
+            FROM contacts c 
+            LEFT JOIN companies co ON c.company_id = co.id 
+            WHERE c.id = ? AND c.is_public = TRUE
+        ");
+        $stmt->execute([$contactIdentifier]);
+        $contact = $stmt->fetch(PDO::FETCH_ASSOC);
+    } elseif (preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $contactIdentifier)) {
+        // UUID lookup
+        $stmt = $pdo->prepare("
+            SELECT c.*, co.name as company_name, co.slug as company_slug, co.brand_color, co.logo_url
+            FROM contacts c 
+            LEFT JOIN companies co ON c.company_id = co.id 
+            WHERE c.uuid = ? AND c.is_public = TRUE
+        ");
+        $stmt->execute([$contactIdentifier]);
+        $contact = $stmt->fetch(PDO::FETCH_ASSOC);
+    }
     
     if (!$contact) {
         http_response_code(404);
