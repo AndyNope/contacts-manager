@@ -69,6 +69,12 @@ if ($_POST) {
         $instagram = trim($_POST['instagram'] ?? '');
         $photo = trim($_POST['photo'] ?? '');
         
+        // Background customization fields
+        $backgroundType = $_POST['background_type'] ?? 'gradient';
+        $backgroundValue = trim($_POST['background_value'] ?? '');
+        $backgroundOverlay = isset($_POST['background_overlay']) ? 1 : 0;
+        $backgroundOverlayOpacity = (float)($_POST['background_overlay_opacity'] ?? 0.3);
+        
         // Validation
         if (empty($firstName) || empty($lastName)) {
             throw new Exception('First name and last name are required');
@@ -95,6 +101,10 @@ if ($_POST) {
                 facebook = ?, 
                 instagram = ?,
                 photo = ?,
+                background_type = ?,
+                background_value = ?,
+                background_overlay = ?,
+                background_overlay_opacity = ?,
                 updated_at = NOW()
             WHERE id = ? AND created_by = ?
         ");
@@ -102,7 +112,8 @@ if ($_POST) {
         $stmt->execute([
             $firstName, $lastName, $email, $phone, $position, $company, 
             $website, $address, $notes, $linkedin, $twitter, $facebook, 
-            $instagram, $photo, $contact['id'], $_SESSION['user_id']
+            $instagram, $photo, $backgroundType, $backgroundValue, 
+            $backgroundOverlay, $backgroundOverlayOpacity, $contact['id'], $_SESSION['user_id']
         ]);
         
         // Also update user table email if it changed
@@ -312,6 +323,114 @@ if ($_POST) {
             background: rgba(102, 126, 234, 0.1);
             transform: scale(1.05);
         }
+        
+        /* Background Customization Styles */
+        .background-options {
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 15px;
+            padding: 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .background-option-section {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .gradient-presets {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 1rem;
+            margin-top: 0.5rem;
+        }
+        
+        .gradient-option {
+            text-align: center;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+        
+        .gradient-option:hover {
+            transform: translateY(-2px);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+        
+        .gradient-option.selected {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.1);
+        }
+        
+        .gradient-preview {
+            width: 100%;
+            height: 60px;
+            border-radius: 6px;
+            margin-bottom: 0.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .preview-container {
+            position: relative;
+            height: 120px;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .preview-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: white;
+            z-index: 2;
+        }
+        
+        .preview-container::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.3);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 1;
+        }
+        
+        .preview-container.with-overlay::after {
+            opacity: 1;
+        }
+        
+        .form-control-color {
+            width: 100%;
+            height: 50px;
+            border-radius: 8px !important;
+        }
+        
+        .form-range {
+            background: transparent;
+        }
+        
+        .form-range::-webkit-slider-thumb {
+            background: #667eea;
+            border: 2px solid white;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+        }
+        
+        .form-range::-moz-range-thumb {
+            background: #667eea;
+            border: 2px solid white;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+        }
     </style>
 </head>
 <body>
@@ -505,6 +624,134 @@ if ($_POST) {
                                     <label for="instagram"><i class="bi bi-instagram me-2"></i>Instagram</label>
                                 </div>
                             </div>
+                            
+                            <!-- Background Customization Section -->
+                            <div class="col-12 mb-3">
+                                <h6 class="text-muted mb-3">
+                                    <i class="bi bi-palette me-2"></i>Profile Background Customization
+                                </h6>
+                            </div>
+                            
+                            <div class="col-12 mb-3">
+                                <div class="background-options">
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label">Background Type</label>
+                                            <select class="form-select" id="background_type" name="background_type" onchange="updateBackgroundOptions()">
+                                                <option value="gradient" <?= ($contact['background_type'] ?? 'gradient') === 'gradient' ? 'selected' : '' ?>>
+                                                    🎨 Gradient (Default)
+                                                </option>
+                                                <option value="color" <?= ($contact['background_type'] ?? '') === 'color' ? 'selected' : '' ?>>
+                                                    🎯 Solid Color
+                                                </option>
+                                                <option value="image" <?= ($contact['background_type'] ?? '') === 'image' ? 'selected' : '' ?>>
+                                                    🖼️ Background Image
+                                                </option>
+                                                <option value="video" <?= ($contact['background_type'] ?? '') === 'video' ? 'selected' : '' ?>>
+                                                    🎬 Video Background
+                                                </option>
+                                            </select>
+                                        </div>
+                                        
+                                        <div class="col-md-6 mb-3">
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input" type="checkbox" id="background_overlay" 
+                                                       name="background_overlay" <?= ($contact['background_overlay'] ?? 0) ? 'checked' : '' ?>>
+                                                <label class="form-check-label" for="background_overlay">
+                                                    Add Dark Overlay (improves text readability)
+                                                </label>
+                                            </div>
+                                            
+                                            <div class="mt-2" id="overlay_opacity_section" style="<?= ($contact['background_overlay'] ?? 0) ? '' : 'display: none;' ?>">
+                                                <label for="background_overlay_opacity" class="form-label">Overlay Opacity</label>
+                                                <input type="range" class="form-range" id="background_overlay_opacity" 
+                                                       name="background_overlay_opacity" min="0" max="0.8" step="0.1" 
+                                                       value="<?= $contact['background_overlay_opacity'] ?? 0.3 ?>">
+                                                <small class="text-muted">Current: <span id="opacity_value"><?= $contact['background_overlay_opacity'] ?? 0.3 ?></span></small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Gradient Options -->
+                                    <div id="gradient_options" class="background-option-section" style="<?= ($contact['background_type'] ?? 'gradient') === 'gradient' ? '' : 'display: none;' ?>">
+                                        <label class="form-label">Select Gradient</label>
+                                        <div class="gradient-presets">
+                                            <?php 
+                                            $gradients = [
+                                                'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' => 'Purple Blue (Default)',
+                                                'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)' => 'Pink Coral',
+                                                'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)' => 'Sky Blue',
+                                                'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)' => 'Green Mint',
+                                                'linear-gradient(135deg, #fa709a 0%, #fee140 100%)' => 'Pink Yellow',
+                                                'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)' => 'Soft Pastel',
+                                                'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)' => 'Rose Pink',
+                                                'linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)' => 'Purple Pink'
+                                            ];
+                                            foreach ($gradients as $gradient => $name): ?>
+                                                <div class="gradient-option" onclick="selectGradient('<?= htmlspecialchars($gradient) ?>')">
+                                                    <div class="gradient-preview" style="background: <?= $gradient ?>"></div>
+                                                    <small><?= $name ?></small>
+                                                </div>
+                                            <?php endforeach; ?>
+                                        </div>
+                                        <input type="hidden" id="gradient_value" name="background_value" 
+                                               value="<?= htmlspecialchars($contact['background_value'] ?? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)') ?>">
+                                    </div>
+                                    
+                                    <!-- Color Options -->
+                                    <div id="color_options" class="background-option-section" style="<?= ($contact['background_type'] ?? '') === 'color' ? '' : 'display: none;' ?>">
+                                        <div class="form-floating">
+                                            <input type="color" class="form-control form-control-color" id="color_value" 
+                                                   name="background_value" value="<?= htmlspecialchars($contact['background_value'] ?? '#667eea') ?>">
+                                            <label for="color_value">Choose Background Color</label>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Image Options -->
+                                    <div id="image_options" class="background-option-section" style="<?= ($contact['background_type'] ?? '') === 'image' ? '' : 'display: none;' ?>">
+                                        <div class="form-floating">
+                                            <input type="url" class="form-control" id="image_value" name="background_value" 
+                                                   value="<?= htmlspecialchars($contact['background_value'] ?? '') ?>"
+                                                   placeholder="https://example.com/background.jpg">
+                                            <label for="image_value">Background Image URL</label>
+                                        </div>
+                                        <small class="text-muted mt-1 d-block">
+                                            <i class="bi bi-info-circle me-1"></i>
+                                            Use high-quality images (1920x1080+) for best results. Supports JPG, PNG, WebP.
+                                        </small>
+                                    </div>
+                                    
+                                    <!-- Video Options -->
+                                    <div id="video_options" class="background-option-section" style="<?= ($contact['background_type'] ?? '') === 'video' ? '' : 'display: none;' ?>">
+                                        <div class="form-floating">
+                                            <input type="url" class="form-control" id="video_value" name="background_value" 
+                                                   value="<?= htmlspecialchars($contact['background_value'] ?? '') ?>"
+                                                   placeholder="https://example.com/background.mp4">
+                                            <label for="video_value">Background Video URL</label>
+                                        </div>
+                                        <small class="text-muted mt-1 d-block">
+                                            <i class="bi bi-info-circle me-1"></i>
+                                            Use MP4 format for best compatibility. Keep file size under 10MB for fast loading.
+                                        </small>
+                                        <div class="alert alert-info mt-2">
+                                            <i class="bi bi-lightbulb me-2"></i>
+                                            <strong>Pro Tip:</strong> Video backgrounds create stunning profiles but use more data. 
+                                            Consider enabling the dark overlay for better text readability.
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Live Preview -->
+                                    <div class="background-preview mt-3">
+                                        <label class="form-label">Live Preview</label>
+                                        <div class="preview-container" id="background_preview">
+                                            <div class="preview-content">
+                                                <h6><?= htmlspecialchars($contact['first_name'] . ' ' . $contact['last_name']) ?></h6>
+                                                <p><?= htmlspecialchars($contact['position'] ?? 'Your Position') ?></p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         
                         <!-- Action Buttons -->
@@ -673,7 +920,126 @@ if ($_POST) {
                 }
             }
         });
+        
+        // Initialize background customization
+        updateBackgroundPreview();
+        
+        // Background overlay toggle
+        document.getElementById('background_overlay').addEventListener('change', function() {
+            const opacitySection = document.getElementById('overlay_opacity_section');
+            opacitySection.style.display = this.checked ? 'block' : 'none';
+            updateBackgroundPreview();
+        });
+        
+        // Opacity slider
+        document.getElementById('background_overlay_opacity').addEventListener('input', function() {
+            document.getElementById('opacity_value').textContent = this.value;
+            updateBackgroundPreview();
+        });
+        
+        // Background value changes
+        document.getElementById('color_value').addEventListener('change', updateBackgroundPreview);
+        document.getElementById('image_value').addEventListener('input', updateBackgroundPreview);
+        document.getElementById('video_value').addEventListener('input', updateBackgroundPreview);
     });
+    
+    // Background customization functions
+    function updateBackgroundOptions() {
+        const type = document.getElementById('background_type').value;
+        
+        // Hide all option sections
+        document.querySelectorAll('.background-option-section').forEach(section => {
+            section.style.display = 'none';
+        });
+        
+        // Show selected option section
+        document.getElementById(type + '_options').style.display = 'block';
+        
+        updateBackgroundPreview();
+    }
+    
+    function selectGradient(gradient) {
+        document.getElementById('gradient_value').value = gradient;
+        
+        // Update selected state
+        document.querySelectorAll('.gradient-option').forEach(option => {
+            option.classList.remove('selected');
+        });
+        event.currentTarget.classList.add('selected');
+        
+        updateBackgroundPreview();
+    }
+    
+    function updateBackgroundPreview() {
+        const preview = document.getElementById('background_preview');
+        const type = document.getElementById('background_type').value;
+        const hasOverlay = document.getElementById('background_overlay').checked;
+        const overlayOpacity = document.getElementById('background_overlay_opacity').value;
+        
+        let backgroundStyle = '';
+        
+        switch(type) {
+            case 'gradient':
+                const gradientValue = document.getElementById('gradient_value').value || 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+                backgroundStyle = `background: ${gradientValue}`;
+                break;
+                
+            case 'color':
+                const colorValue = document.getElementById('color_value').value || '#667eea';
+                backgroundStyle = `background: ${colorValue}`;
+                break;
+                
+            case 'image':
+                const imageValue = document.getElementById('image_value').value;
+                if (imageValue) {
+                    backgroundStyle = `background: url('${imageValue}') center/cover no-repeat`;
+                } else {
+                    backgroundStyle = `background: linear-gradient(135deg, #667eea 0%, #764ba2 100%)`;
+                }
+                break;
+                
+            case 'video':
+                const videoValue = document.getElementById('video_value').value;
+                if (videoValue) {
+                    // For video preview, show a placeholder with video icon
+                    backgroundStyle = `background: linear-gradient(135deg, #1a1a1a 0%, #333 100%)`;
+                    preview.innerHTML = `
+                        <div class="preview-content">
+                            <i class="bi bi-play-circle" style="font-size: 2rem; margin-bottom: 0.5rem;"></i>
+                            <h6>Video Background</h6>
+                            <p>Video will play on live profile</p>
+                        </div>
+                        ${hasOverlay ? `<div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,${overlayOpacity}); z-index: 1;"></div>` : ''}
+                    `;
+                    return;
+                } else {
+                    backgroundStyle = `background: linear-gradient(135deg, #667eea 0%, #764ba2 100%)`;
+                }
+                break;
+        }
+        
+        preview.style.cssText = backgroundStyle;
+        
+        // Add/remove overlay class
+        if (hasOverlay && type !== 'video') {
+            preview.classList.add('with-overlay');
+            preview.style.setProperty('--overlay-opacity', overlayOpacity);
+        } else {
+            preview.classList.remove('with-overlay');
+        }
+        
+        // Update overlay opacity CSS variable
+        if (hasOverlay) {
+            const afterElement = preview.querySelector('::after') || preview;
+            preview.style.setProperty('--overlay-opacity', overlayOpacity);
+        }
+    }
     </script>
+    
+    <style>
+    .preview-container.with-overlay::after {
+        opacity: var(--overlay-opacity, 0.3);
+    }
+    </style>
 </body>
 </html>

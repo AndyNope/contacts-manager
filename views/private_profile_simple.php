@@ -36,10 +36,63 @@ $profileUrl = '/private/' . $contactId;
     
     <style>
         body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            <?php 
+            // Dynamic background based on contact settings
+            $backgroundType = $contact['background_type'] ?? 'gradient';
+            $backgroundValue = $contact['background_value'] ?? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+            $hasOverlay = ($contact['background_overlay'] ?? 0) == 1;
+            $overlayOpacity = $contact['background_overlay_opacity'] ?? 0.3;
+            
+            switch($backgroundType) {
+                case 'color':
+                    echo "background: {$backgroundValue};";
+                    break;
+                case 'image':
+                    if (!empty($backgroundValue)) {
+                        echo "background: url('{$backgroundValue}') center/cover no-repeat fixed;";
+                    } else {
+                        echo "background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);";
+                    }
+                    break;
+                case 'video':
+                    echo "background: #000;"; // Fallback for video
+                    break;
+                case 'gradient':
+                default:
+                    echo "background: {$backgroundValue};";
+                    break;
+            }
+            ?>
             min-height: 100vh;
             font-family: 'Arial', sans-serif;
+            position: relative;
         }
+        
+        <?php if ($backgroundType === 'video' && !empty($backgroundValue)): ?>
+        .video-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: -2;
+        }
+        <?php endif; ?>
+        
+        <?php if ($hasOverlay): ?>
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, <?= $overlayOpacity ?>);
+            z-index: -1;
+            pointer-events: none;
+        }
+        <?php endif; ?>
         
         .profile-card {
             background: rgba(255, 255, 255, 0.95);
@@ -100,6 +153,13 @@ $profileUrl = '/private/' . $contactId;
     </style>
 </head>
 <body>
+    <?php if ($backgroundType === 'video' && !empty($backgroundValue)): ?>
+        <video autoplay muted loop class="video-background">
+            <source src="<?= htmlspecialchars($backgroundValue) ?>" type="video/mp4">
+            <!-- Fallback for unsupported video -->
+        </video>
+    <?php endif; ?>
+    
     <div class="container py-5">
         <div class="row justify-content-center">
             <div class="col-md-8 col-lg-6">
