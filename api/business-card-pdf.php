@@ -67,18 +67,23 @@ try {
             'contact_name' => $contact['first_name'] . ' ' . $contact['last_name']
         ]);
     } elseif ($format === 'download') {
-        // For download, return both sides HTML
-        header('Content-Type: text/html');
-        header('Content-Disposition: attachment; filename="business-card-' . sanitizeFileName($contact['first_name'] . '-' . $contact['last_name']) . '.html"');
+        // Generate actual PDF for download
+        $html = generateTwoSidedBusinessCard($contact);
+        $filename = sanitizeFileName($contact['first_name'] . '-' . $contact['last_name']);
         
-        echo generateTwoSidedBusinessCard($contact);
+        generatePDF($html, $filename);
         exit;
     } elseif ($format === 'download-qr') {
-        // For QR code back side download
-        header('Content-Type: text/html');
-        header('Content-Disposition: attachment; filename="business-card-qr-' . sanitizeFileName($contact['first_name'] . '-' . $contact['last_name']) . '.html"');
+        // Generate PDF for QR code back side
+        $html = generateQRBusinessCard($contact);
+        $filename = sanitizeFileName($contact['first_name'] . '-' . $contact['last_name'] . '-qr');
         
-        echo generateQRBusinessCard($contact);
+        generatePDF($html, $filename);
+        exit;
+    } elseif ($format === 'html') {
+        // For debugging - return HTML version
+        header('Content-Type: text/html');
+        echo generateTwoSidedBusinessCard($contact);
         exit;
     }
     
@@ -590,5 +595,172 @@ function sanitizeFileName($filename) {
     $filename = preg_replace('/[^A-Za-z0-9\-_]/', '-', $filename);
     $filename = preg_replace('/-+/', '-', $filename);
     return trim($filename, '-');
+}
+
+function generatePDF($html, $filename) {
+    try {
+        // Try to use DomPDF if available
+        if (class_exists('Dompdf\Dompdf')) {
+            require_once 'vendor/autoload.php';
+            
+            $dompdf = new Dompdf\Dompdf();
+            $dompdf->loadHtml($html);
+            $dompdf->setPaper('A4', 'portrait');
+            $dompdf->render();
+            
+            header('Content-Type: application/pdf');
+            header('Content-Disposition: attachment; filename="' . $filename . '.pdf"');
+            
+            echo $dompdf->output();
+            return;
+        }
+        
+        // Fallback: Use wkhtmltopdf if available on server
+        $wkhtmltopdf = shell_exec('which wkhtmltopdf 2>/dev/null');
+        if (!empty($wkhtmltopdf)) {
+            // Create temporary HTML file
+            $tempHtml = tempnam(sys_get_temp_dir(), 'business_card_') . '.html';
+            file_put_contents($tempHtml, $html);
+            
+            // Generate PDF using wkhtmltopdf
+            $tempPdf = tempnam(sys_get_temp_dir(), 'business_card_') . '.pdf';
+            $command = escapeshellcmd(trim($wkhtmltopdf)) . ' --page-size A4 --margin-top 0 --margin-bottom 0 --margin-left 0 --margin-right 0 ' . 
+                      escapeshellarg($tempHtml) . ' ' . escapeshellarg($tempPdf) . ' 2>/dev/null';
+            
+            exec($command, $output, $returnCode);
+            
+            if ($returnCode === 0 && file_exists($tempPdf)) {
+                header('Content-Type: application/pdf');
+                header('Content-Disposition: attachment; filename="' . $filename . '.pdf"');
+                
+                readfile($tempPdf);
+                unlink($tempHtml);
+                unlink($tempPdf);
+                return;
+            }
+            
+            // Clean up on failure
+            if (file_exists($tempHtml)) unlink($tempHtml);
+            if (file_exists($tempPdf)) unlink($tempPdf);
+        }
+        
+        // Fallback: Return print-optimized HTML with instructions
+        generatePrintableHTML($html, $filename);
+        
+    } catch (Exception $e) {
+        error_log('PDF Generation Error: ' . $e->getMessage());
+        generatePrintableHTML($html, $filename);
+    }
+}
+
+function generatePrintableHTML($html, $filename) {
+    $pdfHtml = '<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Business Card - ' . htmlspecialchars($filename) . '</title>
+    <style>
+        @media print {
+            @page {
+                size: A4;
+                margin: 10mm;
+            }
+            body {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
+            }
+            .print-instructions {
+                display: none !important;
+            }
+        }
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background: white;
+        }
+        .print-instructions {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        .print-btn {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 2px solid white;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+        .print-btn:hover {
+            background: white;
+            color: #667eea;
+            transform: translateY(-2px);
+        }
+        .steps {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        .step {
+            background: rgba(255,255,255,0.1);
+            padding: 10px 15px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            font-size: 14px;
+        }
+    </style>
+    <script>
+        function printCard() {
+            window.print();
+        }
+        
+        function downloadPDF() {
+            // Try to trigger download via print
+            if (window.print) {
+                window.print();
+            } else {
+                alert("Please use Ctrl+P (Cmd+P on Mac) to print/save as PDF");
+            }
+        }
+    </script>
+</head>
+<body>
+    <div class="print-instructions">
+        <h2>📄 Business Card Ready for PDF Export</h2>
+        <p>Your business card is ready! Use the print function to save as PDF:</p>
+        
+        <div class="steps">
+            <div class="step">1️⃣ Click Print below</div>
+            <div class="step">2️⃣ Select "Save as PDF"</div>
+            <div class="step">3️⃣ Choose filename & save</div>
+        </div>
+        
+        <button class="print-btn" onclick="printCard()">
+            🖨️ Print / Save as PDF
+        </button>
+        
+        <p><small><strong>Tip:</strong> This will create a proper PDF file for professional printing!</small></p>
+    </div>
+    
+    ' . $html . '
+</body>
+</html>';
+
+    header('Content-Type: text/html; charset=UTF-8');
+    header('Content-Disposition: inline; filename="' . $filename . '-printable.html"');
+    
+    echo $pdfHtml;
 }
 ?>
