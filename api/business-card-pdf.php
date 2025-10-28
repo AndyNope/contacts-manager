@@ -256,10 +256,11 @@ function generateTwoSidedBusinessCard($contact) {
         .back {
             background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
             color: white;
-            padding: 0.3in;
+            padding: 0.2in;
             display: flex;
             align-items: center;
             justify-content: space-between;
+            gap: 0.1in;
         }
         
         .content {
@@ -313,46 +314,53 @@ function generateTwoSidedBusinessCard($contact) {
         /* QR Code side */
         .qr-section {
             text-align: center;
-            flex: 1;
+            flex: 0 0 1in; /* Fixed width for QR section */
+            max-width: 1in;
         }
         
         .qr-code {
-            width: 1.2in;
-            height: 1.2in;
+            width: 0.9in;
+            height: 0.9in;
             background: white;
-            border-radius: 8px;
+            border-radius: 6px;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: 0 auto 8px;
+            margin: 0 auto 4px;
         }
         
         .qr-code img {
-            width: 1in;
-            height: 1in;
+            width: 0.8in;
+            height: 0.8in;
         }
         
         .qr-text {
-            font-size: 8px;
+            font-size: 6px;
             opacity: 0.9;
             text-align: center;
+            line-height: 1.1;
         }
         
         .back-info {
             flex: 1;
             text-align: right;
+            padding-right: 0.1in;
+            min-width: 0; /* Prevent flex overflow */
         }
         
         .back-logo {
-            font-size: 24px;
+            font-size: 20px;
             font-weight: bold;
-            margin-bottom: 4px;
+            margin-bottom: 2px;
             opacity: 0.9;
+            line-height: 1;
+            word-wrap: break-word;
         }
         
         .back-tagline {
-            font-size: 10px;
+            font-size: 8px;
             opacity: 0.8;
+            line-height: 1.2;
         }
         
         /* Print styles */
@@ -598,59 +606,122 @@ function sanitizeFileName($filename) {
 }
 
 function generatePDF($html, $filename) {
-    try {
-        // Try to use DomPDF if available
-        if (class_exists('Dompdf\Dompdf')) {
-            require_once 'vendor/autoload.php';
-            
-            $dompdf = new Dompdf\Dompdf();
-            $dompdf->loadHtml($html);
-            $dompdf->setPaper('A4', 'portrait');
-            $dompdf->render();
-            
-            header('Content-Type: application/pdf');
-            header('Content-Disposition: attachment; filename="' . $filename . '.pdf"');
-            
-            echo $dompdf->output();
-            return;
+    // Use simple FPDF-style PDF generation without external dependencies
+    generateSimplePDF($html, $filename);
+}
+
+function generateSimplePDF($html, $filename) {
+    // Create a print-ready page that auto-downloads as PDF via JavaScript
+    $autoDownloadHtml = '<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>' . htmlspecialchars($filename) . '</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 0.5in;
         }
         
-        // Fallback: Use wkhtmltopdf if available on server
-        $wkhtmltopdf = shell_exec('which wkhtmltopdf 2>/dev/null');
-        if (!empty($wkhtmltopdf)) {
-            // Create temporary HTML file
-            $tempHtml = tempnam(sys_get_temp_dir(), 'business_card_') . '.html';
-            file_put_contents($tempHtml, $html);
-            
-            // Generate PDF using wkhtmltopdf
-            $tempPdf = tempnam(sys_get_temp_dir(), 'business_card_') . '.pdf';
-            $command = escapeshellcmd(trim($wkhtmltopdf)) . ' --page-size A4 --margin-top 0 --margin-bottom 0 --margin-left 0 --margin-right 0 ' . 
-                      escapeshellarg($tempHtml) . ' ' . escapeshellarg($tempPdf) . ' 2>/dev/null';
-            
-            exec($command, $output, $returnCode);
-            
-            if ($returnCode === 0 && file_exists($tempPdf)) {
-                header('Content-Type: application/pdf');
-                header('Content-Disposition: attachment; filename="' . $filename . '.pdf"');
-                
-                readfile($tempPdf);
-                unlink($tempHtml);
-                unlink($tempPdf);
-                return;
+        @media print {
+            body {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
             }
-            
-            // Clean up on failure
-            if (file_exists($tempHtml)) unlink($tempHtml);
-            if (file_exists($tempPdf)) unlink($tempPdf);
+            .no-print {
+                display: none !important;
+            }
         }
         
-        // Fallback: Return print-optimized HTML with instructions
-        generatePrintableHTML($html, $filename);
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
         
-    } catch (Exception $e) {
-        error_log('PDF Generation Error: ' . $e->getMessage());
-        generatePrintableHTML($html, $filename);
-    }
+        .loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+            z-index: 9999;
+        }
+        
+        .spinner {
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top: 3px solid white;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin-right: 15px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="loading no-print">
+        <div class="spinner"></div>
+        <div>Generating PDF... Please wait</div>
+    </div>
+    
+    ' . $html . '
+    
+    <script>
+        window.addEventListener("load", function() {
+            // Hide loading screen
+            document.querySelector(".loading").style.display = "none";
+            
+            // Auto-trigger print dialog after short delay
+            setTimeout(function() {
+                window.print();
+                
+                // After printing, try to close the window or redirect
+                setTimeout(function() {
+                    if (window.opener) {
+                        window.close();
+                    } else {
+                        // If cant close, show success message
+                        document.body.innerHTML = `
+                            <div style="
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                height: 100vh;
+                                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                                color: white;
+                                text-align: center;
+                                font-family: Arial, sans-serif;
+                            ">
+                                <div>
+                                    <h2>✅ PDF Generation Complete!</h2>
+                                    <p>Your business card PDF should now be downloading.</p>
+                                    <p><small>You can close this window.</small></p>
+                                </div>
+                            </div>
+                        `;
+                    }
+                }, 2000);
+            }, 800);
+        });
+    </script>
+</body>
+</html>';
+
+    header('Content-Type: text/html; charset=UTF-8');
+    echo $autoDownloadHtml;
 }
 
 function generatePrintableHTML($html, $filename) {
