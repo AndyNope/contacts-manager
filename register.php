@@ -136,7 +136,7 @@ if (isset($_GET['success'])) {
             <?php endif; ?>
 
             <!-- Registration Form -->
-            <form method="POST" action="/api/register_debug.php" id="registerForm">
+            <form method="POST" action="/api/register.php" id="registerForm">
                 <!-- Plan Selection -->
                 <div class="mb-6">
                     <label class="block text-sm font-medium text-gray-700 mb-3">Choose Your Plan</label>

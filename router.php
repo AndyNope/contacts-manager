@@ -599,14 +599,47 @@ class Router {
         $apiEndpoint = $this->segments[1];
         
         switch ($apiEndpoint) {
+            case 'register':
+                include 'api/register.php';
+                break;
+            case 'login':
+                include 'api/login.php';
+                break;
+            case 'login_simple':
+                include 'api/login_simple.php';
+                break;
+            case 'logout':
+                include 'api/logout.php';
+                break;
             case 'business-card':
-                include 'api/generate_business_card.php';
+                include 'api/business-card.php';
+                break;
+            case 'business-card-pdf.php':
+                include 'api/business-card-pdf.php';
                 break;
             case 'analytics':
                 include 'api/analytics.php';
                 break;
             case 'vcard':
                 include 'api/vcard.php';
+                break;
+            case 'qr-code.php':
+                include 'api/qr-code.php';
+                break;
+            case 'upload_handler.php':
+                include 'api/upload_handler.php';
+                break;
+            case 'paypal_webhook.php':
+                include 'api/paypal_webhook.php';
+                break;
+            case 'create_subscription.php':
+                include 'api/create_subscription.php';
+                break;
+            case 'subscription_success.php':
+                include 'api/subscription_success.php';
+                break;
+            case 'subscription_cancel.php':
+                include 'api/subscription_cancel.php';
                 break;
             default:
                 $this->show404();
