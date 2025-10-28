@@ -226,7 +226,7 @@ class Router {
             SELECT c.*, u.first_name as creator_first_name, u.last_name as creator_last_name 
             FROM contacts c 
             LEFT JOIN users u ON c.created_by = u.id 
-            WHERE c.company_id = ? AND c.slug = ?
+            WHERE c.company_id = ? AND c.slug = ? AND c.is_public = 1
         ");
         $stmt->execute([$privateCompany['id'], $userSlug]);
         $contact = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -236,11 +236,32 @@ class Router {
             $stmt = $this->db->prepare("
                 SELECT c.*, u.first_name as creator_first_name, u.last_name as creator_last_name 
                 FROM contacts c 
-                LEFT JOIN users u ON c.created_by = u.id 
-                WHERE c.company_id = ? AND u.profile_slug = ?
+                INNER JOIN users u ON c.created_by = u.id 
+                WHERE c.company_id = ? AND u.profile_slug = ? AND c.is_public = 1
             ");
             $stmt->execute([$privateCompany['id'], $userSlug]);
             $contact = $stmt->fetch(PDO::FETCH_ASSOC);
+        }
+        
+        // If still not found, try a broader search without relying on the join
+        if (!$contact) {
+            $stmt = $this->db->prepare("
+                SELECT c.* FROM contacts c 
+                WHERE c.company_id = ? AND c.slug = ? AND c.is_public = 1
+            ");
+            $stmt->execute([$privateCompany['id'], $userSlug]);
+            $contact = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            // If found, get creator info separately
+            if ($contact && $contact['created_by']) {
+                $stmt = $this->db->prepare("SELECT first_name, last_name FROM users WHERE id = ?");
+                $stmt->execute([$contact['created_by']]);
+                $creator = $stmt->fetch(PDO::FETCH_ASSOC);
+                if ($creator) {
+                    $contact['creator_first_name'] = $creator['first_name'];
+                    $contact['creator_last_name'] = $creator['last_name'];
+                }
+            }
         }
         
         return $contact;

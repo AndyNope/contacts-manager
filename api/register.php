@@ -245,16 +245,16 @@ try {
         // For private profiles, create contact with user slug and UUID
         $stmt = $pdo->prepare("
             INSERT INTO contacts 
-            (company_id, first_name, last_name, email, position, slug, uuid, created_by, created_at, updated_at) 
-            VALUES (?, ?, ?, ?, 'Private Profile', ?, ?, ?, NOW(), NOW())
+            (company_id, first_name, last_name, email, position, slug, uuid, is_public, created_by, created_at, updated_at) 
+            VALUES (?, ?, ?, ?, 'Private Profile', ?, ?, 1, ?, NOW(), NOW())
         ");
         $stmt->execute([$companyId, $firstName, $lastName, $email, $userSlug, $uuid, $userId]);
     } else {
         // For company profiles, create regular contact with UUID
         $stmt = $pdo->prepare("
             INSERT INTO contacts 
-            (company_id, first_name, last_name, email, position, uuid, created_by, created_at, updated_at) 
-            VALUES (?, ?, ?, ?, 'Founder', ?, ?, NOW(), NOW())
+            (company_id, first_name, last_name, email, position, uuid, is_public, created_by, created_at, updated_at) 
+            VALUES (?, ?, ?, ?, 'Founder', ?, 1, ?, NOW(), NOW())
         ");
         $stmt->execute([$companyId, $firstName, $lastName, $email, $uuid, $userId]);
     }
@@ -277,7 +277,7 @@ try {
     if ($plan === 'free') {
         // Free plan - redirect to appropriate dashboard
         if ($isPrivateProfile) {
-            header('Location: /private/profile/' . $userSlug);
+            header('Location: /private/' . $userSlug);
         } else {
             header('Location: /' . $companySlug);
         }
